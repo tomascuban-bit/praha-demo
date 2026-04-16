@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.env
+backend/.env
+
+# Node
+node_modules/
+frontend/.next/
+frontend/out/
+*.next
+
+# Local dev secrets
+.streamlit/
+secrets.toml
+
+# OS
+.DS_Store
+
+# Data files (sample CSVs are committed, production data is not)
+backend/data/*.csv
+!backend/data/.gitkeep

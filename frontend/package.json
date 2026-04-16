@@ -1,0 +1,35 @@
+{
+  "name": "praha-demo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@tanstack/react-query": "^5.80.0",
+    "@tanstack/react-table": "^8.21.0",
+    "echarts": "^5.5.0",
+    "echarts-for-react": "^3.0.0",
+    "framer-motion": "^11.18.0",
+    "lucide-react": "^0.500.0",
+    "react-markdown": "^9.0.1",
+    "remark-gfm": "^4.0.0",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.6.0",
+    "@tailwindcss/typography": "^0.5.16"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/node": "^22.0.0"
+  }
+}
