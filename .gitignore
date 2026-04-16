@@ -23,3 +23,4 @@ secrets.toml
 backend/data/*.csv
 !backend/data/.gitkeep
 .mcp.json
+CLAUDE.md
