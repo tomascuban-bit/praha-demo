@@ -26,12 +26,14 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-# ─── Keboola table IDs — update after Keboola pipeline is set up ──────────────
+# ─── Keboola table IDs ────────────────────────────────────────────────────────
+# Bucket: out.c-Praha-Demo-Golemio-to-Output-Tables
+# Created by transformation: keboola.snowflake-transformation / 01kpb7p5cmfrpkx2ywm2tkfczn
 TABLE_IDS: dict[str, str] = {
-    "bicycle_counters":     "out.c-praha-demo.bicycle_counters",
-    "bicycle_measurements": "out.c-praha-demo.bicycle_measurements",
-    "traffic_detectors":    "out.c-praha-demo.traffic_detectors",
-    "traffic_measurements": "out.c-praha-demo.traffic_measurements",
+    "bicycle_counters":     "out.c-Praha-Demo-Golemio-to-Output-Tables.bicycle_counters",
+    "bicycle_measurements": "out.c-Praha-Demo-Golemio-to-Output-Tables.bicycle_measurements",
+    "traffic_detectors":    "out.c-Praha-Demo-Golemio-to-Output-Tables.traffic_detectors",
+    "traffic_measurements": "out.c-Praha-Demo-Golemio-to-Output-Tables.traffic_measurements",
 }
 
 # Module-level data store — populated once by init_data(), read by get_data()
