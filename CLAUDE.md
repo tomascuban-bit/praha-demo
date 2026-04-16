@@ -4,8 +4,8 @@
 A Keboola Data App built with Streamlit, deployed to Keboola Data Apps (GCP EU West3).
 
 **GitHub**: https://github.com/tomascuban-bit/praha-demo (private)
-**Keboola Project**: `tomas.cuban@keboola.com` (ID: 2737)
-**Keboola UI**: https://connection.europe-west3.gcp.keboola.com/admin/projects/2737/
+**Keboola Project**: `tomas.cuban@keboola.com` (ID: 347)
+**Keboola UI**: https://connection.us-east4.gcp.keboola.com/admin/projects/347/
 **SQL Dialect**: Snowflake
 **Owner**: tomas.cuban@keboola.com
 
@@ -15,7 +15,7 @@ A Keboola Data App built with Streamlit, deployed to Keboola Data Apps (GCP EU W
 
 ### Tools Required
 - Claude Code CLI with `--dangerously-skip-permissions` for auto-approval
-- Keboola MCP (`mcp__claude_ai_Keboola_GCP_EU__*`) — data validation and querying
+- Keboola MCP (`mcp__keboola__*`) — data validation and querying (project 347, US East4)
 - Playwright MCP (`mcp__plugin_dataapp-developer_playwright__*`) — visual verification
 - GitHub CLI (`gh`) — repo management
 
@@ -101,11 +101,12 @@ Praha Demo/
 ## Keboola Backend
 
 ### Project Details
-- **Project ID**: 2737
-- **Region**: europe-west3.gcp (GCP EU)
+- **Project ID**: 347
+- **Region**: us-east4.gcp (GCP US)
 - **SQL Dialect**: Snowflake
 - **Conditional Flows**: Enabled
-- **Keboola UI**: https://connection.europe-west3.gcp.keboola.com/admin/projects/2737/
+- **Keboola UI**: https://connection.us-east4.gcp.keboola.com/admin/projects/347/
+- **Snowflake Database**: `KBC_USE4_347`
 
 ### Data Sources
 - **Golemio Open API** — Prague city open data platform (`api.golemio.cz`)
@@ -115,9 +116,9 @@ Praha Demo/
 ### Golemio Extractors (ex-generic-v2)
 | Config name | Config ID | Golemio endpoint | Output table |
 |---|---|---|---|
-| Bicycle Counters | `01kpb78aqj02w5g4pjxc663j8z` | `GET /v2/bicyclecounters` | `in.c-golemio.bicycle_counters` (40 rows) |
-| Vehicle Positions | `01kpb78csxyhmwerdt6kxbsf3c` | `GET /v2/vehiclepositions` | `in.c-golemio.vehicle_positions` (snapshot) |
-| Bicycle Detections | `01kpb79km5j6jathhy3cckvszt` | `GET /v2/bicyclecounters/detections` | `in.c-golemio.bicycle_detections` (~20k rows) |
+| Bicycle Counters | `01kpb94gaeygmnwwzqd414x4c4` | `GET /v2/bicyclecounters` | `in.c-golemio.bicycle_counters` (40 rows) |
+| Vehicle Positions | `01kpb94hzpg4ajq54w0kqv5hyt` | `GET /v2/vehiclepositions` | `in.c-golemio.vehicle_positions` (snapshot) |
+| Bicycle Detections | `01kpb94kh8cv4tqntatrs1szv9` | `GET /v2/bicyclecounters/detections` | `in.c-golemio.bicycle_detections` (~20k rows) |
 
 **Important**: The Golemio API `/v2/trafficdetectors` does not exist in the public API. Vehicle positions (`/v2/vehiclepositions`) is used instead — it gives real-time transit positions (buses, trams, metro). This table accumulates snapshots over multiple runs (primary key = `extracted_at`).
 
@@ -132,13 +133,14 @@ Praha Demo/
 
 ### SQL Transformation
 - **Name**: Praha Demo — Golemio to Output Tables
-- **Config ID**: `01kpb7p5cmfrpkx2ywm2tkfczn`
+- **Config ID**: `01kpb9a6nf71mwwwg88rh8xesy`
 - **Component**: `keboola.snowflake-transformation`
 - Maps raw Golemio data into the 4 output tables the FastAPI backend expects
+- SQL uses fully qualified names: `"KBC_USE4_347"."in.c-golemio"."<table>"`
 
 ### Flow
 - **Name**: Praha Demo — Daily Refresh
-- **Config ID**: `01kpb7w4ec1j8te0tpv6kvw7pc`
+- **Config ID**: `01kpb9cxcj4rbt2cea1zdyd4rs`
 - **Component**: `keboola.flow`
 - Phase 1: 3 extractors in parallel → Phase 2: SQL transformation
 
@@ -146,13 +148,11 @@ Praha Demo/
 
 ## Progress Log
 
-### 2026-04-16 — Session 1: Full Scaffold + Keboola Pipeline Built
+### 2026-04-16 — Session 1: Full Scaffold + Keboola Pipeline Built (project 2737 — incorrect)
 
 **Done**:
 - [x] Local folder + git repo initialized
 - [x] GitHub repo created: https://github.com/tomascuban-bit/praha-demo (private)
-- [x] Keboola project explored — confirmed empty, Snowflake, GCP EU West3
-- [x] Inspiration repo researched: `ottomansky/ads-sales-dashboard` (Next.js + FastAPI)
 - [x] Golemio Prague Open API researched (traffic + bicycle counters)
 - [x] **Full app scaffold built and pushed** — 34 files, 2,576 lines
   - FastAPI backend (overview, cycling, traffic, query routers + KAI streaming)
@@ -161,22 +161,22 @@ Praha Demo/
   - Nginx + Supervisord Keboola deployment config
   - 90 days × 10 stations sample CSV data for local dev
 - [x] **Golemio API key configured** — JWT token added to all extractor configs
-- [x] **3 Keboola extractors created and running** (all succeeded):
-  - Bicycle Counters: 40 real counter locations
-  - Bicycle Detections: ~19,700 5-minute passage count records (2 days of data)
-  - Vehicle Positions: real-time transit snapshot (accumulates per run)
-- [x] **SQL Transformation created and ran** — 4 clean output tables produced
-- [x] **Keboola Flow created** — orchestrates extractors + transformation daily
-- [x] **`data_loader.py` updated** — TABLE_IDS point to correct bucket
-- [x] `CLAUDE.md` documentation maintained
+- [x] Pipeline built in wrong Keboola project (2737, GCP EU) — rebuilt in Session 2
 
-**Next Steps**:
-- [ ] Run `npm install` + `npm run dev` in `frontend/` to verify local app
-- [ ] Set up `backend/.env` with KBC_TOKEN + KBC_URL to test with real Keboola data
-- [ ] Schedule the Flow (cron trigger) in Keboola UI — currently manual-run only
-- [ ] Deploy to Keboola Data Apps (build Next.js standalone + push to repo)
-- [ ] Consider: add map visualization (Leaflet/Mapbox) for counter/detector locations
-- [ ] Consider: KAI chat context — wire up actual data queries in the chat prompts
+### 2026-04-16 — Session 2: Pipeline Rebuilt in Correct Project (347, GCP US East4)
+
+**Done**:
+- [x] **Pipeline rebuilt in project 347** (mcp__keboola__* tools):
+  - 3 extractors: Bicycle Counters, Vehicle Positions, Bicycle Detections
+  - SQL Transformation with correct `KBC_USE4_347` fully-qualified Snowflake references
+  - Flow: Praha Demo — Daily Refresh (Phase 1: extractors parallel → Phase 2: transform)
+- [x] **Flow run manually** to populate raw and output tables
+- [x] `CLAUDE.md` and memory updated to reflect project 347
+- [x] `.env.example` and `data_loader.py` comment updated for project 347
+- [ ] **Local dev verified** — backend + frontend started, all pages tested
+- [ ] **`backend/.env`** created with KBC_TOKEN + KBC_URL for project 347
+- [ ] **Deployed to Keboola Data Apps** (project 347)
+- [ ] **Flow cron** scheduled in Keboola UI
 
 ---
 

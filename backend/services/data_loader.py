@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # ─── Keboola table IDs ────────────────────────────────────────────────────────
 # Bucket: out.c-Praha-Demo-Golemio-to-Output-Tables
-# Created by transformation: keboola.snowflake-transformation / 01kpb7p5cmfrpkx2ywm2tkfczn
+# Created by transformation: keboola.snowflake-transformation / 01kpb9a6nf71mwwwg88rh8xesy (project 347)
 TABLE_IDS: dict[str, str] = {
     "bicycle_counters":     "out.c-Praha-Demo-Golemio-to-Output-Tables.bicycle_counters",
     "bicycle_measurements": "out.c-Praha-Demo-Golemio-to-Output-Tables.bicycle_measurements",

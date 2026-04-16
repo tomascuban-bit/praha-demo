@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 .env
 backend/.env
+backend/*.egg-info/
 
 # Node
 node_modules/
@@ -21,3 +22,4 @@ secrets.toml
 # Data files (sample CSVs are committed, production data is not)
 backend/data/*.csv
 !backend/data/.gitkeep
+.mcp.json
