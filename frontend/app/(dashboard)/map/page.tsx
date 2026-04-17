@@ -16,10 +16,9 @@ export default function MapPage() {
   const { data: mapData, isLoading } = useMapData()
   const { data: parking } = useParking()
 
-  const avgAq = mapData?.air_quality.length
-    ? mapData.air_quality
-        .filter(s => s.aq_index != null)
-        .reduce((sum, s, _, arr) => sum + (s.aq_index! / arr.length), 0)
+  const aqWithData = mapData?.air_quality.filter(s => s.aq_index != null) ?? []
+  const avgAq = aqWithData.length
+    ? aqWithData.reduce((sum, s) => sum + s.aq_index!, 0) / aqWithData.length
     : null
   const roundedAq = avgAq != null ? Math.round(avgAq) : null
 
