@@ -14,7 +14,7 @@ Five-tab dashboard (Czech UI):
 |-----|---------|
 | **Přehled** | KPI tiles (24 h / 7-day cyclists, free parking %) + daily trend chart with 7/14/30/90-day range control; amber notice when data window < requested range |
 | **Cyklistika** | Daily bar chart, hourly pattern curve, top counters table — 7/14/30/90-day segmented control; unavailable ranges dimmed with data availability notice |
-| **Parkování** | 17 Prague TSK P+R lots — per-lot horizontal bars with **Obsazenost (%) / Kapacita** view toggle; fill-distribution donut (ColorBrewer palette, lot counts in legend); 4 KPI tiles |
+| **Parkování** | 17 Prague TSK P+R lots — per-lot horizontal bars with **Obsazenost (%) / Kapacita** view toggle; fill-distribution donut (ColorBrewer palette, lot counts in legend); 4 KPI tiles; last-update timestamp badge (Prague timezone) |
 | **Mapa města** | Leaflet interactive map — 🚲 green circles (variable size by 7-day count, "7 dní" date chip) for bike counters; colored **P** squares (green→red by fill %) for P+R lots; parking popup includes visual fill bar |
 | **Sestavy** | Report Builder: pick source × dimension × measure × chart type → bar or line; PNG download, CSV export, shareable URL state (`?src=&dim=&msr=&ct=`) |
 
