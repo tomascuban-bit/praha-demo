@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { ParkingCircle, Car, CheckCircle2, AlertTriangle } from 'lucide-react'
 import {
@@ -8,6 +9,8 @@ import {
   useParkingDistribution,
 } from '@/lib/api'
 import { COLORS } from '@/lib/constants'
+
+type ChartView = 'pct' | 'abs'
 
 const FILL_COLORS: Record<string, string> = {
   '0–25 % obsazeno':    '#2DC653',
@@ -43,9 +46,65 @@ export default function ParkingPage() {
   const { data: summary, isLoading: summaryLoading } = useParkingSummary()
   const { data: lots } = useParkingLots()
   const { data: distribution } = useParkingDistribution()
+  const [chartView, setChartView] = useState<ChartView>('pct')
 
-  // Horizontal stacked bar: individual lots (sorted fullest first = inverse axis)
-  const lotsChart = {
+  // Sort for each view
+  const lotsByPct = [...(lots ?? [])].sort((a, b) => b.pct_full - a.pct_full)
+  const lotsByCapacity = [...(lots ?? [])].sort((a, b) => b.total_spots - a.total_spots)
+  const displayLots = chartView === 'pct' ? lotsByPct : lotsByCapacity
+
+  const lotNames = displayLots.map(l => l.name || `P+R …${l.parking_id.slice(-6)}`)
+
+  // Occupancy (%) view — bars normalized to 100, length = fill %
+  const pctChart = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      backgroundColor: '#fff',
+      borderColor: COLORS.border,
+      textStyle: { color: COLORS.brandSecondary, fontSize: 12 },
+      formatter: (params: { dataIndex: number }[]) => {
+        const lot = displayLots[params[0]?.dataIndex]
+        if (!lot) return ''
+        return `<b>${lot.name || lot.parking_id}</b><br/>Obsazeno: ${lot.pct_full.toFixed(0)} % (${lot.occupied_spots}/${lot.total_spots} míst)`
+      },
+    },
+    legend: { data: ['Obsazená', 'Volná'], top: 0, textStyle: { color: '#64748b', fontSize: 11 } },
+    grid: { left: 16, right: 100, bottom: 0, top: 28, containLabel: true },
+    xAxis: { type: 'value', max: 100, axisLabel: { fontSize: 10, color: '#94a3b8', formatter: '{value} %' } },
+    yAxis: { type: 'category', inverse: true, data: lotNames, axisLabel: { fontSize: 11, color: '#475569' } },
+    series: [
+      {
+        name: 'Obsazená',
+        type: 'bar',
+        stack: 'total',
+        data: displayLots.map(l => +l.pct_full.toFixed(1)),
+        itemStyle: { color: '#D62828' },
+        barMaxWidth: 20,
+      },
+      {
+        name: 'Volná',
+        type: 'bar',
+        stack: 'total',
+        data: displayLots.map(l => +(100 - l.pct_full).toFixed(1)),
+        itemStyle: { color: '#2DC653', borderRadius: [0, 3, 3, 0] },
+        label: {
+          show: true,
+          position: 'right',
+          formatter: (p: { dataIndex: number }) => {
+            const l = displayLots[p.dataIndex]
+            return l ? `${l.pct_full.toFixed(0)} %  ${l.occupied_spots}/${l.total_spots} míst` : ''
+          },
+          fontSize: 10,
+          color: '#64748b',
+        },
+        barMaxWidth: 20,
+      },
+    ],
+  }
+
+  // Absolute capacity view — bars = total spots, stacked obsazeno/volno
+  const absChart = {
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
@@ -53,46 +112,31 @@ export default function ParkingPage() {
       borderColor: COLORS.border,
       textStyle: { color: COLORS.brandSecondary, fontSize: 12 },
     },
-    legend: {
-      data: ['Volná', 'Obsazená'],
-      top: 0,
-      textStyle: { color: '#64748b', fontSize: 11 },
-    },
-    grid: { left: 16, right: 80, bottom: 0, top: 28, containLabel: true },
+    legend: { data: ['Obsazená', 'Volná'], top: 0, textStyle: { color: '#64748b', fontSize: 11 } },
+    grid: { left: 16, right: 16, bottom: 0, top: 28, containLabel: true },
     xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#94a3b8' } },
-    yAxis: {
-      type: 'category',
-      inverse: true,
-      data: (lots ?? []).map(l => l.name || `P+R …${l.parking_id.slice(-6)}`),
-      axisLabel: { fontSize: 11, color: '#475569' },
-    },
+    yAxis: { type: 'category', inverse: true, data: lotNames, axisLabel: { fontSize: 11, color: '#475569' } },
     series: [
-      {
-        name: 'Volná',
-        type: 'bar',
-        stack: 'total',
-        data: (lots ?? []).map(l => l.free_spots),
-        itemStyle: { color: '#2DC653', borderRadius: 0 },
-      },
       {
         name: 'Obsazená',
         type: 'bar',
         stack: 'total',
-        data: (lots ?? []).map(l => l.occupied_spots),
-        itemStyle: { color: '#D62828', borderRadius: [0, 3, 3, 0] },
-        label: {
-          show: true,
-          position: 'right',
-          formatter: (p: { dataIndex: number }) => {
-            const lot = lots?.[p.dataIndex]
-            return lot ? `${lot.pct_full.toFixed(0)}%` : ''
-          },
-          fontSize: 10,
-          color: '#64748b',
-        },
+        data: displayLots.map(l => l.occupied_spots),
+        itemStyle: { color: '#D62828' },
+        barMaxWidth: 20,
+      },
+      {
+        name: 'Volná',
+        type: 'bar',
+        stack: 'total',
+        data: displayLots.map(l => l.free_spots),
+        itemStyle: { color: '#2DC653', borderRadius: [0, 3, 3, 0] },
+        barMaxWidth: 20,
       },
     ],
   }
+
+  const lotsChart = chartView === 'pct' ? pctChart : absChart
 
   // Donut: distribution by lot count
   const distributionChart = {
@@ -202,12 +246,34 @@ export default function ParkingPage() {
       <div className="grid lg:grid-cols-5 gap-6">
         {/* Per-lot stacked bar — wider */}
         <div className="lg:col-span-3 bg-white rounded-2xl border border-border p-6">
-          <h2 className="text-sm font-semibold text-brand-secondary mb-1">Obsazenost podle parkoviště</h2>
-          <p className="text-xs text-gray-400 mb-4">Volná vs obsazená místa na každém P+R parkovišti</p>
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <h2 className="text-sm font-semibold text-brand-secondary">Obsazenost podle parkoviště</h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {chartView === 'pct' ? 'Délka pruhu = obsazenost v %, seřazeno od nejplnějšího' : 'Délka pruhu = absolutní počet míst, seřazeno dle kapacity'}
+              </p>
+            </div>
+            {/* View toggle — segmented control */}
+            <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
+              {([['pct', 'Obsazenost (%)'], ['abs', 'Kapacita']] as [ChartView, string][]).map(([v, label], i) => (
+                <button
+                  key={v}
+                  onClick={() => setChartView(v)}
+                  className={[
+                    'px-3 py-1.5 text-xs font-medium transition-all',
+                    i > 0 ? 'border-l border-border' : '',
+                    chartView === v ? 'bg-brand-primary text-white' : 'bg-surface text-gray-600 hover:bg-gray-50',
+                  ].join(' ')}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           {lots ? (
             <ReactECharts
               option={lotsChart}
-              style={{ height: Math.max(200, (lots.length * 36)) }}
+              style={{ height: Math.max(200, (displayLots.length * 36)) }}
             />
           ) : (
             <div className="h-56 animate-pulse bg-surface rounded-xl" />
