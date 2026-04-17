@@ -25,7 +25,7 @@ export default function CyclingPage() {
     },
     yAxis: { type: 'value', axisLabel: { fontSize: 11, color: '#94a3b8' } },
     series: [{
-      name: 'Cyclists',
+      name: 'Cyklisté',
       type: 'bar',
       data: trend?.map(d => d.cyclists) ?? [],
       itemStyle: { color: COLORS.brandAccent, borderRadius: [3, 3, 0, 0] },
@@ -43,7 +43,7 @@ export default function CyclingPage() {
     },
     yAxis: { type: 'value', axisLabel: { fontSize: 11, color: '#94a3b8' } },
     series: [{
-      name: 'Avg Cyclists',
+      name: 'Prům. cyklisté',
       type: 'line',
       smooth: true,
       data: Array.from({ length: 24 }, (_, h) => {
@@ -65,9 +65,9 @@ export default function CyclingPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Bike size={20} className="text-brand-accent" />
-            <h1 className="text-2xl font-bold text-brand-secondary">Cycling in Prague</h1>
+            <h1 className="text-2xl font-bold text-brand-secondary">Cyklistika v Praze</h1>
           </div>
-          <p className="text-sm text-gray-500">Bicycle counter data from Golemio — hourly induction loop measurements</p>
+          <p className="text-sm text-gray-500">Data z počítadel kol Golemio — hodinová měření indukčních smyček</p>
         </div>
         <div className="flex gap-2">
           {DAY_OPTIONS.map(d => (
@@ -77,7 +77,7 @@ export default function CyclingPage() {
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all
                 ${days === d ? 'bg-brand-accent text-white' : 'bg-white border border-border text-gray-600 hover:border-brand-accent/50'}`}
             >
-              {d}d
+              {d} dní
             </button>
           ))}
         </div>
@@ -86,7 +86,7 @@ export default function CyclingPage() {
       {/* Charts row */}
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-border p-6">
-          <h2 className="text-sm font-semibold text-brand-secondary mb-4">Daily Cyclist Count</h2>
+          <h2 className="text-sm font-semibold text-brand-secondary mb-4">Denní počet cyklistů</h2>
           {trendLoading ? (
             <div className="h-56 animate-pulse bg-surface rounded-xl" />
           ) : (
@@ -94,7 +94,7 @@ export default function CyclingPage() {
           )}
         </div>
         <div className="bg-white rounded-2xl border border-border p-6">
-          <h2 className="text-sm font-semibold text-brand-secondary mb-4">Average by Hour of Day</h2>
+          <h2 className="text-sm font-semibold text-brand-secondary mb-4">Průměr podle hodiny dne</h2>
           <ReactECharts option={hourlyOption} style={{ height: 224 }} />
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function CyclingPage() {
       {/* Top counters table */}
       <div className="bg-white rounded-2xl border border-border">
         <div className="px-6 py-4 border-b border-border">
-          <h2 className="text-sm font-semibold text-brand-secondary">Top Bicycle Counters — Last {days} Days</h2>
+          <h2 className="text-sm font-semibold text-brand-secondary">Nejaktivnější počítadla — posl. {days} dní</h2>
         </div>
         {counterLoading ? (
           <div className="p-6 space-y-3">
@@ -116,9 +116,9 @@ export default function CyclingPage() {
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Counter</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Route</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Cyclists</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Počítadlo</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Trasa</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Celkem cyklistů</th>
                 </tr>
               </thead>
               <tbody>
@@ -138,7 +138,7 @@ export default function CyclingPage() {
                 {topCounters.length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-6 py-8 text-center text-gray-400 text-sm">
-                      No data available — check Keboola pipeline
+                      Žádná data — zkontrolujte pipeline Keboola
                     </td>
                   </tr>
                 )}

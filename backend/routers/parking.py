@@ -1,5 +1,5 @@
 """
-Parking page — occupancy dashboard across Czech city operators.
+Parkování — obsazenost P+R parkovišť TSK Praha.
 """
 from __future__ import annotations
 
@@ -10,15 +10,19 @@ from services.data_loader import _DATA
 
 router = APIRouter()
 
-SOURCE_LABELS: dict[str, str] = {
-    "tsk-offstreet": "TSK Prague (garages)",
-    "korid":         "KORID (Liberec)",
-    "smart4city":    "Smart4City (Prague P+R)",
-    "isphk":         "ISP (Hradec Králové)",
-    "bedrichov":     "Bedřichov (ski resort)",
-    "pmdp":          "PMDP (Pilsen)",
-    "greencenter":   "Green Center",
-    "mr_parkit":     "Mr. Parkit",
+# Coordinates and names for Prague TSK P+R lots (from Golemio /v3/parking/{id})
+# 7 of the 17 lots return null centroid from Golemio — omitted from map layer
+PARKING_LOCATIONS: dict[str, dict] = {
+    "tsk-offstreet-f589ef8e-1209-4793-87ba-7e405839f506": {"lat": 50.0532, "lon": 14.2913, "name": "P+R Zličín 1"},
+    "tsk-offstreet-360e4af6-3a4e-433b-49bb-cbb4c773f9cf": {"lat": 50.0546, "lon": 14.2898, "name": "P+R Zličín 2"},
+    "tsk-offstreet-67000fcd-d2d1-4861-8de1-4afd35c706c0": {"lat": 50.0521, "lon": 14.3500, "name": "P+R Nové Butovice"},
+    "tsk-offstreet-0de6185c-f3a8-4ce6-b684-bdb6d95fe737": {"lat": 50.0612, "lon": 14.4293, "name": "P+R Kongresové centrum"},
+    "tsk-offstreet-4145ef72-c325-41c9-8b34-2af23290f942": {"lat": 50.0385, "lon": 14.4770, "name": "P+R Opatov"},
+    "tsk-offstreet-b567b2eb-b89c-4549-846a-e82cbda1dcf9": {"lat": 50.0704, "lon": 14.5116, "name": "P+R Skalka 1"},
+    "tsk-offstreet-bba3106f-e408-466f-8f75-bbd919ee4efa": {"lat": 50.0708, "lon": 14.5122, "name": "P+R Skalka 2"},
+    "tsk-offstreet-58b9c5cc-02e0-468d-b8a6-a3e49a528025": {"lat": 50.1070, "lon": 14.5627, "name": "P+R Rajská zahrada"},
+    "tsk-offstreet-8d125ea8-8f76-4045-4792-f6edb76e73f6": {"lat": 50.1100, "lon": 14.5790, "name": "P+R Černý Most"},
+    "tsk-offstreet-f01831c1-415d-463d-b51f-1a91ba7bd4ed": {"lat": 50.0986, "lon": 14.4165, "name": "P+R Holešovice"},
 }
 
 
@@ -27,6 +31,8 @@ def _pk() -> pd.DataFrame:
     if pk.empty:
         return pk
     df = pk.copy()
+    if "source" in df.columns:
+        df = df[df["source"] == "tsk-offstreet"]
     for col in ["total_spots", "free_spots", "occupied_spots"]:
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
     df = df[df["total_spots"] > 0]
@@ -76,7 +82,7 @@ def parking_by_operator():
     return [
         {
             "source":        row["source"],
-            "label":         SOURCE_LABELS.get(row["source"], row["source"]),
+            "label":         "TSK Praha (P+R parkoviště)",
             "lot_count":     int(row["lot_count"]),
             "total_spots":   int(row["total_spots"]),
             "free_spots":    int(row["free_spots"]),
@@ -97,10 +103,11 @@ def parking_lots():
         {
             "parking_id":    row["parking_id"],
             "source":        row["source"],
-            "label":         SOURCE_LABELS.get(row["source"], row["source"]),
+            "label":         "TSK Praha",
+            "name":          PARKING_LOCATIONS.get(row["parking_id"], {}).get("name", ""),
             "total_spots":   int(row["total_spots"]),
             "free_spots":    int(row["free_spots"]),
-            "occupied_spots": int(row["occupied_spots"]),
+            "occupied_spots": int(row.get("occupied_spots", 0)),
             "pct_full":      float(row["pct_full"]),
             "has_free_spots": bool(row.get("has_free_spots", True)),
             "last_updated":  str(row.get("last_updated", "")),
@@ -116,11 +123,11 @@ def parking_distribution():
         return []
 
     buckets = [
-        ("0–25% full",   0,  25),
-        ("25–50% full", 25,  50),
-        ("50–75% full", 50,  75),
-        ("75–90% full", 75,  90),
-        ("90–100% full", 90, 101),
+        ("0–25 % obsazeno",    0,  25),
+        ("25–50 % obsazeno",  25,  50),
+        ("50–75 % obsazeno",  50,  75),
+        ("75–90 % obsazeno",  75,  90),
+        ("90–100 % obsazeno", 90, 101),
     ]
 
     return [

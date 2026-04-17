@@ -72,7 +72,7 @@ export default function OverviewPage() {
     },
     series: [
       {
-        name: 'Cyclists',
+        name: 'Cyklisté',
         type: 'line',
         smooth: true,
         data: chart?.map(d => d.cyclists) ?? [],
@@ -87,13 +87,13 @@ export default function OverviewPage() {
     <div className="max-w-screen-2xl mx-auto px-6 py-8 space-y-8">
       {/* Hero */}
       <div>
-        <h1 className="text-2xl font-bold text-brand-secondary">Prague Mobility Overview</h1>
+        <h1 className="text-2xl font-bold text-brand-secondary">Přehled mobility Prahy</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Real-time cycling and traffic data from the{' '}
+          Aktuální data o cyklistice z{' '}
           <a href="https://api.golemio.cz/docs/public-openapi/" target="_blank" rel="noreferrer" className="text-brand-primary hover:underline">
-            Golemio open data platform
+            otevřené datové platformy Golemio
           </a>
-          , delivered via Keboola.
+          , doručená přes Keboola.
         </p>
       </div>
 
@@ -112,8 +112,8 @@ export default function OverviewPage() {
 
       {/* Trend chart */}
       <div className="bg-white rounded-2xl border border-border p-6">
-        <h2 className="text-base font-semibold text-brand-secondary mb-1">Daily Cyclist Trend</h2>
-        <p className="text-xs text-gray-400 mb-5">Total bicycle passages per day across all Golemio counters</p>
+        <h2 className="text-base font-semibold text-brand-secondary mb-1">Denní trend cyklistů</h2>
+        <p className="text-xs text-gray-400 mb-5">Celkový počet průjezdů kol za den na všech počítadlech Golemio</p>
         {chartLoading ? (
           <div className="h-72 animate-pulse bg-surface rounded-xl" />
         ) : (
@@ -123,15 +123,16 @@ export default function OverviewPage() {
 
       {/* Data sources */}
       <div className="bg-brand-secondary/[0.03] border border-brand-secondary/10 rounded-2xl p-5">
-        <h3 className="text-sm font-semibold text-brand-secondary mb-3">About This Dashboard</h3>
+        <h3 className="text-sm font-semibold text-brand-secondary mb-3">O dashboardu</h3>
         <div className="grid md:grid-cols-2 gap-4 text-xs text-gray-600 leading-relaxed">
           <div>
-            <span className="font-medium text-brand-secondary">Bicycle & Pedestrian Counters</span> — Golemio API provides hourly
-            passage counts from induction loop sensors installed on Prague's cycling infrastructure. Pedestrian counts come from the same sensors at shared paths.
+            <span className="font-medium text-brand-secondary">Počítadla cyklistů a chodců</span> — Golemio API poskytuje
+            hodinové počty průjezdů z indukčních smyček instalovaných na pražské cyklistické infrastruktuře.
+            Počty chodců pocházejí ze stejných senzorů na sdílených stezkách.
           </div>
           <div>
-            <span className="font-medium text-brand-secondary">Parking</span> — Real-time parking occupancy from monitored
-            lots across Prague. Refreshed every 2 hours via Keboola pipeline from Golemio open data.
+            <span className="font-medium text-brand-secondary">Parkování</span> — Aktuální obsazenost
+            P+R parkovišť TSK Praha. Obnovováno každé 2 hodiny přes pipeline Keboola z otevřených dat Golemio.
           </div>
         </div>
       </div>

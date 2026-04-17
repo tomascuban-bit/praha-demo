@@ -23,7 +23,7 @@ export default function Header() {
           </div>
           <div>
             <span className="font-semibold text-brand-secondary text-sm">Praha Demo</span>
-            <span className="ml-2 text-xs text-gray-400 hidden sm:inline">Prague Mobility Dashboard</span>
+            <span className="ml-2 text-xs text-gray-400 hidden sm:inline">Přehled mobility Prahy</span>
           </div>
           <span className="ml-2 px-2 py-0.5 rounded-full bg-brand-primary/10 text-brand-primary text-[10px] font-semibold uppercase tracking-wide">
             Golemio Open Data
@@ -40,7 +40,7 @@ export default function Header() {
               className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-brand-primary transition-colors"
             >
               <ExternalLink size={13} />
-              <span className="hidden sm:inline">Keboola Project</span>
+              <span className="hidden sm:inline">Keboola projekt</span>
             </a>
           )}
 
@@ -53,7 +53,7 @@ export default function Header() {
               }`}
           >
             <MessageSquare size={15} />
-            <span>Ask KAI</span>
+            <span>Zeptat se KAI</span>
           </button>
 
           {user?.email && (

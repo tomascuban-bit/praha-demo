@@ -76,8 +76,20 @@ export interface BicycleCounterMapPoint {
   count_7d: number
 }
 
+export interface ParkingMapPoint {
+  parking_id: string
+  name: string
+  lat: number
+  lon: number
+  total_spots: number
+  free_spots: number
+  occupied_spots: number
+  pct_full: number
+}
+
 export interface MapDataResponse {
   bicycle_counters: BicycleCounterMapPoint[]
+  parking: ParkingMapPoint[]
 }
 
 // Parking dashboard
@@ -106,6 +118,7 @@ export interface ParkingLot {
   parking_id: string
   source: string
   label: string
+  name: string
   total_spots: number
   free_spots: number
   occupied_spots: number

@@ -45,15 +45,15 @@ export function Chat() {
             <Bot size={16} className="text-white" />
           </div>
           <div>
-            <div className="text-sm font-semibold text-brand-secondary">KAI Assistant</div>
-            <div className="text-[11px] text-gray-400">Ask about Prague mobility data</div>
+            <div className="text-sm font-semibold text-brand-secondary">Asistent KAI</div>
+            <div className="text-[11px] text-gray-400">Ptejte se na data mobility Prahy</div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={clearMessages}
             className="p-1.5 rounded-lg text-gray-400 hover:text-brand-primary hover:bg-brand-primary/5 transition-colors"
-            title="Clear conversation"
+            title="Vymazat konverzaci"
           >
             <Trash2 size={14} />
           </button>
@@ -73,15 +73,15 @@ export function Chat() {
             <div className="w-12 h-12 rounded-2xl bg-brand-primary/10 flex items-center justify-center mb-3">
               <Bot size={22} className="text-brand-primary" />
             </div>
-            <p className="text-sm font-medium text-brand-secondary mb-1">Ask KAI anything</p>
+            <p className="text-sm font-medium text-brand-secondary mb-1">Zeptejte se KAI na cokoliv</p>
             <p className="text-xs text-gray-400 max-w-48">
-              Ask about cycling trends, traffic patterns, peak hours, or specific routes in Prague.
+              Ptejte se na trendy cyklistiky, špičky provozu nebo konkrétní trasy v Praze.
             </p>
             <div className="mt-4 space-y-2 w-full max-w-xs">
               {[
-                'Which bicycle counter has the most traffic?',
-                'What are the peak traffic hours in Prague?',
-                'Compare cycling vs vehicle trends',
+                'Které počítadlo kol má největší provoz?',
+                'Kdy je v Praze špička cyklistů?',
+                'Kde najdu volné parkování v Praze?',
               ].map(suggestion => (
                 <button
                   key={suggestion}
@@ -131,7 +131,7 @@ export function Chat() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about Prague mobility data…"
+            placeholder="Zeptejte se na data mobility Prahy…"
             rows={1}
             className="flex-1 resize-none rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-brand-secondary placeholder:text-gray-400 focus:outline-none focus:border-brand-primary transition-colors"
             style={{ maxHeight: '120px' }}

@@ -15,13 +15,20 @@ function bikeRadius(count: number) {
   return 17
 }
 
+function parkingColor(pct: number): string {
+  if (pct < 25) return '#2DC653'
+  if (pct < 50) return '#86efac'
+  if (pct < 75) return '#f59e0b'
+  if (pct < 90) return '#f97316'
+  return '#ef4444'
+}
+
 interface Props {
   data: MapDataResponse
 }
 
 export default function MapView({ data }: Props) {
   useEffect(() => {
-    // Fix leaflet default icon path issue in Next.js
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const L = require('leaflet')
     delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
@@ -55,7 +62,7 @@ export default function MapView({ data }: Props) {
           />
         </BaseLayer>
 
-        <Overlay checked name="🟢 Bicycle Counters">
+        <Overlay checked name="🟢 Počítadla kol">
           <LayerGroup>
             {data.bicycle_counters.map(c => (
               <CircleMarker
@@ -71,14 +78,41 @@ export default function MapView({ data }: Props) {
               >
                 <Popup>
                   <strong>{c.name}</strong><br />
-                  Route: {c.route || '—'}<br />
-                  Last 7 days: <strong>{c.count_7d.toLocaleString()} cyclists</strong><br />
+                  Trasa: {c.route || '—'}<br />
+                  Posledních 7 dní: <strong>{c.count_7d.toLocaleString('cs-CZ')} cyklistů</strong><br />
                   <span style={{ fontSize: 11, color: '#666' }}>
-                    {Math.round(c.count_7d / maxCount * 100)}% of busiest counter
+                    {Math.round(c.count_7d / maxCount * 100)} % nejfrekventovanějšího počítadla
                   </span>
                 </Popup>
               </CircleMarker>
             ))}
+          </LayerGroup>
+        </Overlay>
+
+        <Overlay checked name="🅿️ P+R parkoviště">
+          <LayerGroup>
+            {(data.parking ?? []).map(p => {
+              const col = parkingColor(p.pct_full)
+              return (
+                <CircleMarker
+                  key={p.parking_id}
+                  center={[p.lat, p.lon]}
+                  radius={9}
+                  pathOptions={{
+                    color: col,
+                    fillColor: col,
+                    fillOpacity: 0.85,
+                    weight: 2,
+                  }}
+                >
+                  <Popup>
+                    <strong>{p.name}</strong><br />
+                    Volná místa: <strong>{p.free_spots}</strong> / {p.total_spots}<br />
+                    <span style={{ color: col, fontWeight: 'bold' }}>{p.pct_full.toFixed(0)} % obsazeno</span>
+                  </Popup>
+                </CircleMarker>
+              )
+            })}
           </LayerGroup>
         </Overlay>
 

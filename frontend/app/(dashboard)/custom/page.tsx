@@ -28,10 +28,9 @@ export default function ReportBuilderPage() {
     setConfig(pending as ChartConfig)
   }
 
-  // Build ECharts option from result
   const chartOption = (() => {
     if (!result || !result.headers.length) return null
-    const [dimHeader, ...measureHeaders] = result.headers
+    const [, ...measureHeaders] = result.headers
     const categories = result.rows.map(r => r[0])
     const series = measureHeaders.map((name, idx) => ({
       name,
@@ -50,14 +49,16 @@ export default function ReportBuilderPage() {
     }
   })()
 
+  const CHART_LABELS: Record<string, string> = { bar: 'sloupcový', line: 'čárový' }
+
   return (
     <div className="max-w-screen-2xl mx-auto px-6 py-8 space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-1">
           <BarChart2 size={20} className="text-brand-primary" />
-          <h1 className="text-2xl font-bold text-brand-secondary">Report Builder</h1>
+          <h1 className="text-2xl font-bold text-brand-secondary">Sestavy</h1>
         </div>
-        <p className="text-sm text-gray-500">Build custom charts from Prague mobility data — no code required</p>
+        <p className="text-sm text-gray-500">Vytvořte vlastní grafy z dat pražské mobility — bez kódu</p>
       </div>
 
       {/* Builder panel */}
@@ -65,48 +66,48 @@ export default function ReportBuilderPage() {
         <div className="grid md:grid-cols-4 gap-4">
           {/* Source */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Data Source</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Zdroj dat</label>
             <select
               value={pending.source ?? ''}
               onChange={e => setPending({ source: e.target.value, dimension: undefined, measures: [] })}
               className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-brand-secondary focus:outline-none focus:border-brand-primary transition-colors"
             >
-              <option value="">Select source…</option>
+              <option value="">Vyberte zdroj…</option>
               {sources.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
           </div>
 
           {/* Dimension */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Group By</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Seskupit dle</label>
             <select
               value={pending.dimension ?? ''}
               onChange={e => setPending(p => ({ ...p, dimension: e.target.value }))}
               disabled={!selectedSource}
               className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-brand-secondary focus:outline-none focus:border-brand-primary transition-colors disabled:opacity-50"
             >
-              <option value="">Select dimension…</option>
+              <option value="">Vyberte dimenzi…</option>
               {selectedSource?.dimensions.map(d => <option key={d.column} value={d.column}>{d.label}</option>)}
             </select>
           </div>
 
           {/* Measures */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Measure</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ukazatel</label>
             <select
               value={pending.measures?.[0] ?? ''}
               onChange={e => setPending(p => ({ ...p, measures: [e.target.value] }))}
               disabled={!selectedSource}
               className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-brand-secondary focus:outline-none focus:border-brand-primary transition-colors disabled:opacity-50"
             >
-              <option value="">Select measure…</option>
+              <option value="">Vyberte ukazatel…</option>
               {selectedSource?.measures.map(m => <option key={m.column} value={m.column}>{m.label}</option>)}
             </select>
           </div>
 
           {/* Chart type + Run */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Chart Type</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Typ grafu</label>
             <div className="flex gap-2">
               <div className="flex rounded-lg border border-border overflow-hidden flex-1">
                 {(['bar', 'line'] as const).map(t => (
@@ -116,7 +117,7 @@ export default function ReportBuilderPage() {
                     className={`flex-1 py-2 text-xs font-medium capitalize transition-all
                       ${chartType === t ? 'bg-brand-primary text-white' : 'bg-surface text-gray-600 hover:bg-gray-50'}`}
                   >
-                    {t}
+                    {CHART_LABELS[t]}
                   </button>
                 ))}
               </div>
@@ -126,7 +127,7 @@ export default function ReportBuilderPage() {
                 className="px-4 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
               >
                 <Play size={13} />
-                Run
+                Spustit
               </button>
             </div>
           </div>
@@ -150,7 +151,7 @@ export default function ReportBuilderPage() {
                 className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-brand-primary transition-colors"
               >
                 <RefreshCw size={12} />
-                Refresh
+                Obnovit
               </button>
             </div>
             <ReactECharts option={chartOption} style={{ height: 320 }} />
@@ -158,8 +159,8 @@ export default function ReportBuilderPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <BarChart2 size={36} className="text-gray-200 mb-3" />
-            <p className="text-sm font-medium text-gray-400">Select a data source, dimension, and measure to build a chart</p>
-            <p className="text-xs text-gray-300 mt-1">Prague cycling and traffic data available</p>
+            <p className="text-sm font-medium text-gray-400">Vyberte zdroj dat, dimenzi a ukazatel</p>
+            <p className="text-xs text-gray-300 mt-1">K dispozici jsou data cyklistiky v Praze</p>
           </div>
         )}
       </div>
@@ -168,7 +169,7 @@ export default function ReportBuilderPage() {
       {result && result.rows.length > 0 && (
         <div className="bg-white rounded-2xl border border-border">
           <div className="px-6 py-4 border-b border-border">
-            <h2 className="text-sm font-semibold text-brand-secondary">Raw Data ({result.rows.length} rows)</h2>
+            <h2 className="text-sm font-semibold text-brand-secondary">Surová data ({result.rows.length} řádků)</h2>
           </div>
           <div className="overflow-x-auto max-h-64">
             <table className="w-full text-sm">

@@ -5,11 +5,11 @@ import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Bike, BarChart2, Map, ParkingCircle } from 'lucide-react'
 
 const TABS = [
-  { href: '/',         label: 'Overview',  icon: LayoutDashboard },
-  { href: '/cycling',  label: 'Cycling',   icon: Bike },
-  { href: '/parking',  label: 'Parking',   icon: ParkingCircle },
-  { href: '/map',      label: 'City Map',  icon: Map },
-  { href: '/custom',   label: 'Reports',   icon: BarChart2 },
+  { href: '/',         label: 'Přehled',     icon: LayoutDashboard },
+  { href: '/cycling',  label: 'Cyklistika',  icon: Bike },
+  { href: '/parking',  label: 'Parkování',   icon: ParkingCircle },
+  { href: '/map',      label: 'Mapa města',  icon: Map },
+  { href: '/custom',   label: 'Sestavy',     icon: BarChart2 },
 ]
 
 export default function NavTabs() {

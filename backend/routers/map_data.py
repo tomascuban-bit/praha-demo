@@ -1,5 +1,5 @@
 """
-Map data endpoint — all geo-located stations with latest values for the interactive map.
+Map data endpoint — geo-located stations with latest values for the interactive map.
 """
 from __future__ import annotations
 
@@ -7,28 +7,24 @@ import pandas as pd
 from fastapi import APIRouter
 
 from services.data_loader import _DATA
+from routers.parking import PARKING_LOCATIONS, _pk as _parking_pk
 
 router = APIRouter()
 
 
 def _s(val) -> str:
-    """Return empty string for NaN/None, else str(val)."""
     return "" if (val is None or (isinstance(val, float) and pd.isna(val))) else str(val)
 
 
 def _f(val) -> float | None:
-    """Return None for NaN, else float(val)."""
     return None if (val is None or (isinstance(val, float) and pd.isna(val))) else float(val)
 
 
 @router.get("/api/map-data")
 def get_map_data():
-    """
-    All station locations with their most recent metric values.
-    Used by the frontend Leaflet map to render layer markers.
-    """
     result: dict[str, list] = {
         "bicycle_counters": [],
+        "parking": [],
     }
 
     # ── Bicycle counters with 7-day counts ───────────────────────────────────
@@ -61,5 +57,23 @@ def get_map_data():
                 "route": _s(row.get("route")),
                 "count_7d": counts_7d.get(cid, 0),
             })
+
+    # ── Prague P+R parking lots ───────────────────────────────────────────────
+    pk_df = _parking_pk()
+    if not pk_df.empty:
+        for _, row in pk_df.iterrows():
+            lot_id = _s(row.get("parking_id"))
+            loc = PARKING_LOCATIONS.get(lot_id)
+            if loc:
+                result["parking"].append({
+                    "parking_id":    lot_id,
+                    "name":          loc["name"],
+                    "lat":           loc["lat"],
+                    "lon":           loc["lon"],
+                    "total_spots":   int(row["total_spots"]),
+                    "free_spots":    int(row["free_spots"]),
+                    "occupied_spots": int(row.get("occupied_spots", 0)),
+                    "pct_full":      float(row["pct_full"]),
+                })
 
     return result

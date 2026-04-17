@@ -1,5 +1,5 @@
 """
-Overview page — city-wide KPIs and trends for Praha Demo.
+Přehled — celostátní KPI a trendy pro Praha Demo.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def _safe_numeric(df: pd.DataFrame, col: str) -> pd.Series:
 
 @router.get("/api/kpis")
 def get_kpis():
-    """City-wide KPI cards for the Overview page."""
+    """KPI karty pro stránku Přehled."""
     bm = _DATA.get("bicycle_measurements", pd.DataFrame())
     bc = _DATA.get("bicycle_counters", pd.DataFrame())
     pk = _DATA.get("parking_occupancy", pd.DataFrame())
@@ -25,7 +25,6 @@ def get_kpis():
     total_cyclists = int(_safe_numeric(bm, "total_count").sum()) if not bm.empty else 0
     num_counters = len(bc) if not bc.empty else 0
 
-    # Daily trend: last 7 days cyclists + pedestrians
     daily_cyclists = 0
     daily_pedestrians = 0
     if not bm.empty and "measured_from" in bm.columns:
@@ -39,13 +38,14 @@ def get_kpis():
             daily_cyclists = int(recent["total_count"].sum())
             daily_pedestrians = int(recent["total_pedestrians"].sum())
 
-    # Parking: city-wide free spot pct
+    # Parkování — pouze TSK Praha P+R
     parking_pct_free = None
     parking_free = None
     parking_total = None
     if not pk.empty:
-        total_spots = pd.to_numeric(pk.get("total_spots", pd.Series()), errors="coerce").fillna(0).sum()
-        free_spots = pd.to_numeric(pk.get("free_spots", pd.Series()), errors="coerce").fillna(0).sum()
+        pk_prg = pk[pk["source"] == "tsk-offstreet"] if "source" in pk.columns else pk
+        total_spots = pd.to_numeric(pk_prg.get("total_spots", pd.Series()), errors="coerce").fillna(0).sum()
+        free_spots = pd.to_numeric(pk_prg.get("free_spots", pd.Series()), errors="coerce").fillna(0).sum()
         if total_spots > 0:
             parking_pct_free = round(float(free_spots) / float(total_spots) * 100, 1)
             parking_free = int(free_spots)
@@ -53,41 +53,41 @@ def get_kpis():
 
     return [
         {
-            "label": "Total Cyclists Counted",
+            "label": "Cyklisté celkem",
             "value": total_cyclists,
-            "description": "Cumulative bicycle passages across all Golemio counters",
+            "description": "Kumulativní počet průjezdů kol na všech počítadlech Golemio",
             "formula": "SUM(total_count) from bicycle_measurements",
             "sources": ["bicycle_measurements"],
             "icon": "bike",
         },
         {
-            "label": "Last 7 Days Cyclists",
+            "label": "Cyklisté – posl. 7 dní",
             "value": daily_cyclists,
-            "description": "Bicycle passages in the most recent 7-day window",
+            "description": "Průjezdy kol v posledním 7denním okně",
             "formula": "SUM(total_count) WHERE measured_from >= max_date - 7d",
             "sources": ["bicycle_measurements"],
             "icon": "trend",
         },
         {
-            "label": "Pedestrians (7 Days)",
+            "label": "Chodci – posl. 7 dní",
             "value": daily_pedestrians,
-            "description": "Pedestrian passages at bicycle counter locations in the last 7 days",
+            "description": "Průjezdy chodců na lokalitách počítadel za posledních 7 dní",
             "formula": "SUM(total_pedestrians) WHERE measured_from >= max_date - 7d",
             "sources": ["bicycle_measurements"],
             "icon": "walk",
         },
         {
-            "label": "Bicycle Counters",
+            "label": "Počítadla kol",
             "value": num_counters,
-            "description": "Number of active Golemio bicycle counter stations",
+            "description": "Počet aktivních stanic počítadel kol Golemio v Praze",
             "formula": "COUNT(*) from bicycle_counters",
             "sources": ["bicycle_counters"],
             "icon": "sensor",
         },
         {
-            "label": "Parking Availability",
+            "label": "Volné parkování",
             "value": parking_pct_free,
-            "description": f"{parking_free} of {parking_total} monitored parking spots currently free" if parking_free is not None else "No parking data",
+            "description": f"{parking_free} z {parking_total} míst volných v P+R parkovištích TSK Praha" if parking_free is not None else "Žádná data o parkování",
             "formula": "SUM(free_spots)/SUM(total_spots)*100 from parking_occupancy",
             "sources": ["parking_occupancy"],
             "icon": "parking",
@@ -98,7 +98,7 @@ def get_kpis():
 
 @router.get("/api/overview-chart")
 def get_overview_chart():
-    """Daily cyclist trend for the overview line chart."""
+    """Denní trend cyklistů pro přehledový graf."""
     bm = _DATA.get("bicycle_measurements", pd.DataFrame())
 
     if bm.empty or "measured_from" not in bm.columns:
