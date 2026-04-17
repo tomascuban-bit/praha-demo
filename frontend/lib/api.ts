@@ -17,6 +17,7 @@ import type {
   ParkingResponse,
 } from './types'
 
+
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, { signal: AbortSignal.timeout(30_000), ...options })
   if (!res.ok) {
@@ -121,14 +122,6 @@ export function useParking() {
   return useQuery<ParkingResponse>({
     queryKey: ['parking'],
     queryFn: () => apiFetch('/api/environment/parking'),
-    staleTime: 5 * 60 * 1000,
-  })
-}
-
-export function useAirQuality() {
-  return useQuery({
-    queryKey: ['air-quality'],
-    queryFn: () => apiFetch('/api/environment/air-quality'),
     staleTime: 5 * 60 * 1000,
   })
 }

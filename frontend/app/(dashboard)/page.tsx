@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
-import { Bike, Radio, TrendingUp, Activity, PersonStanding, Wind, ParkingCircle } from 'lucide-react'
+import { Bike, Radio, TrendingUp, Activity, PersonStanding, ParkingCircle } from 'lucide-react'
 import { useKpis, useOverviewChart } from '@/lib/api'
 import { formatCount, formatSpeed, COLORS } from '@/lib/constants'
 import type { KpiItem } from '@/lib/types'
@@ -12,7 +12,6 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   sensor:  <Radio size={18} />,
   trend:   <TrendingUp size={18} />,
   walk:    <PersonStanding size={18} />,
-  air:     <Wind size={18} />,
   parking: <ParkingCircle size={18} />,
 }
 
@@ -129,10 +128,6 @@ export default function OverviewPage() {
           <div>
             <span className="font-medium text-brand-secondary">Bicycle & Pedestrian Counters</span> — Golemio API provides hourly
             passage counts from induction loop sensors installed on Prague's cycling infrastructure. Pedestrian counts come from the same sensors at shared paths.
-          </div>
-          <div>
-            <span className="font-medium text-brand-secondary">Air Quality</span> — CHMI (Czech Hydrometeorological Institute)
-            monitoring stations across Prague districts. AQ index 1=Excellent → 7=Very Bad. Data refreshed every 2 hours.
           </div>
           <div>
             <span className="font-medium text-brand-secondary">Parking</span> — Real-time parking occupancy from monitored

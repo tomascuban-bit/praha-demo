@@ -15,19 +15,6 @@ def _safe_numeric(df: pd.DataFrame, col: str) -> pd.Series:
     return pd.to_numeric(df[col], errors="coerce").fillna(0) if col in df.columns else pd.Series(dtype=float)
 
 
-@router.get("/api/environment/air-quality")
-def get_air_quality():
-    """Current air quality index per CHMI station."""
-    aq = _DATA.get("air_quality_stations", pd.DataFrame())
-    if aq.empty:
-        return []
-    df = aq.copy()
-    for col in ["latitude", "longitude"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-    df["aq_index"] = pd.to_numeric(df.get("aq_index", pd.Series(dtype=float)), errors="coerce")
-    return df.fillna("").to_dict(orient="records")
-
-
 @router.get("/api/environment/parking")
 def get_parking():
     """Current parking occupancy across all monitored lots."""

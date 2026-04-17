@@ -7,25 +7,6 @@ import 'leaflet/dist/leaflet.css'
 
 const { BaseLayer, Overlay } = LayersControl
 
-const AQ_COLORS: Record<number, string> = {
-  1: '#00c853', // Excellent
-  2: '#64dd17', // Very Good
-  3: '#ffd600', // Good
-  4: '#ff6d00', // Satisfactory
-  5: '#d50000', // Poor
-  6: '#6a0dad', // Bad
-  7: '#37474f', // Very Bad
-}
-const AQ_LABELS: Record<number, string> = {
-  1: 'Excellent', 2: 'Very Good', 3: 'Good',
-  4: 'Satisfactory', 5: 'Poor', 6: 'Bad', 7: 'Very Bad',
-}
-
-function aqColor(idx: number | null) {
-  if (!idx || idx < 1) return '#9e9e9e'
-  return AQ_COLORS[Math.min(idx, 7)] ?? '#9e9e9e'
-}
-
 function bikeRadius(count: number) {
   if (count === 0) return 6
   if (count < 500) return 8
@@ -101,32 +82,6 @@ export default function MapView({ data }: Props) {
           </LayerGroup>
         </Overlay>
 
-        <Overlay checked name="🟡 Air Quality Stations">
-          <LayerGroup>
-            {data.air_quality.map(s => (
-              <CircleMarker
-                key={s.id}
-                center={[s.lat, s.lon]}
-                radius={9}
-                pathOptions={{
-                  color: aqColor(s.aq_index),
-                  fillColor: aqColor(s.aq_index),
-                  fillOpacity: 0.85,
-                  weight: 2,
-                }}
-              >
-                <Popup>
-                  <strong>{s.name}</strong><br />
-                  District: {s.district}<br />
-                  AQ Index: <strong style={{ color: aqColor(s.aq_index) }}>
-                    {s.aq_index != null ? `${s.aq_index} — ${AQ_LABELS[s.aq_index] ?? 'Unknown'}` : 'No data'}
-                  </strong><br />
-                  <span style={{ fontSize: 11, color: '#666' }}>Updated: {s.updated_at ? new Date(s.updated_at).toLocaleTimeString() : '—'}</span>
-                </Popup>
-              </CircleMarker>
-            ))}
-          </LayerGroup>
-        </Overlay>
       </LayersControl>
     </MapContainer>
   )

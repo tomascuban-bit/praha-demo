@@ -10,8 +10,6 @@ from services.data_loader import _DATA
 
 router = APIRouter()
 
-_AQ_LABELS = {1: "Excellent", 2: "Very Good", 3: "Good", 4: "Satisfactory", 5: "Poor", 6: "Bad", 7: "Very Bad"}
-
 
 def _safe_numeric(df: pd.DataFrame, col: str) -> pd.Series:
     return pd.to_numeric(df[col], errors="coerce").fillna(0) if col in df.columns else pd.Series(dtype=float)
@@ -22,9 +20,6 @@ def get_kpis():
     """City-wide KPI cards for the Overview page."""
     bm = _DATA.get("bicycle_measurements", pd.DataFrame())
     bc = _DATA.get("bicycle_counters", pd.DataFrame())
-    _ = _AQ_LABELS  # referenced in KPI description
-
-    aq = _DATA.get("air_quality_stations", pd.DataFrame())
     pk = _DATA.get("parking_occupancy", pd.DataFrame())
 
     total_cyclists = int(_safe_numeric(bm, "total_count").sum()) if not bm.empty else 0
@@ -43,13 +38,6 @@ def get_kpis():
             recent = bm_copy.loc[bm_copy["measured_from"] >= cutoff]
             daily_cyclists = int(recent["total_count"].sum())
             daily_pedestrians = int(recent["total_pedestrians"].sum())
-
-    # Air quality: average AQ index across all reporting stations
-    avg_aq_index = None
-    if not aq.empty and "aq_index" in aq.columns:
-        aq_vals = pd.to_numeric(aq["aq_index"], errors="coerce").dropna()
-        if len(aq_vals) > 0:
-            avg_aq_index = round(float(aq_vals.mean()), 1)
 
     # Parking: city-wide free spot pct
     parking_pct_free = None
@@ -95,14 +83,6 @@ def get_kpis():
             "formula": "COUNT(*) from bicycle_counters",
             "sources": ["bicycle_counters"],
             "icon": "sensor",
-        },
-        {
-            "label": "Avg Air Quality Index",
-            "value": avg_aq_index,
-            "description": "Average AQ hourly index across all CHMI monitoring stations (1=excellent, 7=very poor; null=no data)",
-            "formula": "AVG(aq_index) from air_quality_stations WHERE aq_index IS NOT NULL",
-            "sources": ["air_quality_stations"],
-            "icon": "air",
         },
         {
             "label": "Parking Availability",

@@ -29,7 +29,6 @@ def get_map_data():
     """
     result: dict[str, list] = {
         "bicycle_counters": [],
-        "air_quality": [],
     }
 
     # ── Bicycle counters with 7-day counts ───────────────────────────────────
@@ -61,28 +60,6 @@ def get_map_data():
                 "lon": float(row["longitude"]),
                 "route": _s(row.get("route")),
                 "count_7d": counts_7d.get(cid, 0),
-            })
-
-    # ── Air quality stations ──────────────────────────────────────────────────
-    aq = _DATA.get("air_quality_stations", pd.DataFrame())
-
-    if not aq.empty:
-        aq_df = aq.copy()
-        aq_df["latitude"] = pd.to_numeric(aq_df.get("latitude"), errors="coerce")
-        aq_df["longitude"] = pd.to_numeric(aq_df.get("longitude"), errors="coerce")
-        aq_df["aq_index"] = pd.to_numeric(aq_df.get("aq_index"), errors="coerce")
-        aq_df = aq_df.dropna(subset=["latitude", "longitude"])
-
-        for _, row in aq_df.iterrows():
-            aq_idx = row.get("aq_index")
-            result["air_quality"].append({
-                "id": _s(row.get("id")),
-                "name": _s(row.get("name")),
-                "lat": float(row["latitude"]),
-                "lon": float(row["longitude"]),
-                "district": _s(row.get("district")),
-                "aq_index": int(aq_idx) if pd.notna(aq_idx) else None,
-                "updated_at": _s(row.get("updated_at")),
             })
 
     return result

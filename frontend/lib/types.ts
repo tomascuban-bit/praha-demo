@@ -76,19 +76,8 @@ export interface BicycleCounterMapPoint {
   count_7d: number
 }
 
-export interface AirQualityMapPoint {
-  id: string
-  name: string
-  lat: number
-  lon: number
-  district: string
-  aq_index: number | null
-  updated_at: string
-}
-
 export interface MapDataResponse {
   bicycle_counters: BicycleCounterMapPoint[]
-  air_quality: AirQualityMapPoint[]
 }
 
 // Parking
