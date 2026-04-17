@@ -9,7 +9,7 @@ const { BaseLayer, Overlay } = LayersControl
 
 function parkingColor(pct: number): string {
   if (pct < 25) return '#2DC653'
-  if (pct < 50) return '#86efac'
+  if (pct < 50) return '#74c69d'
   if (pct < 75) return '#f59e0b'
   if (pct < 90) return '#f97316'
   return '#ef4444'
@@ -47,8 +47,11 @@ export default function MapView({ data }: Props) {
     data.bicycle_counters.map(c => {
       const sz = bikeIconSize(c.count_7d)
       return [c.id, L.divIcon({
-        html: `<div style="width:${sz}px;height:${sz}px;background:#2DC653;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:${Math.round(sz * 0.5)}px;line-height:1">🚲</div>`,
-        iconSize: [sz, sz],
+        html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="width:${sz}px;height:${sz}px;background:#2DC653;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:${Math.round(sz * 0.5)}px;line-height:1">🚲</div>
+          <div style="background:rgba(255,255,255,0.92);border-radius:3px;padding:1px 4px;font-size:9px;font-weight:600;color:#444;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.15)">7 dní</div>
+        </div>`,
+        iconSize: [sz, sz + 16],
         iconAnchor: [sz / 2, sz / 2],
         popupAnchor: [0, -sz / 2],
         className: '',
@@ -125,6 +128,9 @@ export default function MapView({ data }: Props) {
                 <Popup>
                   <strong>{p.name}</strong><br />
                   Volná místa: <strong>{p.free_spots}</strong> / {p.total_spots}<br />
+                  <div style={{ margin: '4px 0 2px', height: 5, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden', width: 140 }}>
+                    <div style={{ height: '100%', width: `${Math.min(p.pct_full, 100)}%`, background: parkingColor(p.pct_full), borderRadius: 3, transition: 'width .3s' }} />
+                  </div>
                   <span style={{ color: parkingColor(p.pct_full), fontWeight: 'bold' }}>
                     {p.pct_full.toFixed(0)} % obsazeno
                   </span>

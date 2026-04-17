@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import ReactECharts from 'echarts-for-react'
-import { BarChart2, Play, RefreshCw } from 'lucide-react'
+import { BarChart2, Play, RefreshCw, Download, FileDown } from 'lucide-react'
 import { useDataSchema, useQueryData } from '@/lib/api'
 import { COLORS } from '@/lib/constants'
 
@@ -13,12 +14,30 @@ interface ChartConfig {
 }
 
 export default function ReportBuilderPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const chartRef = useRef<ReactECharts>(null)
+
   const { data: schema } = useDataSchema()
   const [config, setConfig] = useState<ChartConfig | null>(null)
   const [pending, setPending] = useState<Partial<ChartConfig>>({})
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar')
 
   const { data: result, isLoading, refetch } = useQueryData(config)
+
+  // Restore state from URL on mount
+  useEffect(() => {
+    const src = searchParams.get('src')
+    const dim = searchParams.get('dim')
+    const msr = searchParams.get('msr')
+    const ct = searchParams.get('ct') as 'bar' | 'line' | null
+    if (src && dim && msr) {
+      const cfg: ChartConfig = { source: src, dimension: dim, measures: [msr] }
+      setPending(cfg)
+      setConfig(cfg)
+      if (ct === 'bar' || ct === 'line') setChartType(ct)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const sources = schema?.sources ?? []
   const selectedSource = sources.find(s => s.id === pending.source)
@@ -28,7 +47,37 @@ export default function ReportBuilderPage() {
 
   const handleRun = () => {
     if (!isReady) return
-    setConfig(pending as ChartConfig)
+    const cfg = pending as ChartConfig
+    setConfig(cfg)
+    const params = new URLSearchParams({
+      src: cfg.source,
+      dim: cfg.dimension,
+      msr: cfg.measures[0],
+      ct: chartType,
+    })
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
+
+  const handleDownloadCsv = () => {
+    if (!result) return
+    const lines = [result.headers.join(','), ...result.rows.map(r => r.join(','))]
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `praha-data-${Date.now()}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleDownloadPng = () => {
+    const instance = chartRef.current?.getEchartsInstance()
+    if (!instance) return
+    const url = instance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#fff' })
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `praha-graf-${Date.now()}.png`
+    a.click()
   }
 
   const chartOption = (() => {
@@ -52,7 +101,7 @@ export default function ReportBuilderPage() {
     }
   })()
 
-  const CHART_LABELS: Record<string, string> = { bar: 'sloupcový', line: 'čárový' }
+  const CHART_LABELS: Record<string, string> = { bar: 'Sloupcový', line: 'Čárový' }
 
   return (
     <div className="max-w-screen-2xl mx-auto px-6 py-8 space-y-6">
@@ -113,12 +162,15 @@ export default function ReportBuilderPage() {
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Typ grafu</label>
             <div className="flex gap-2">
               <div className="flex rounded-lg border border-border overflow-hidden flex-1">
-                {(['bar', 'line'] as const).map(t => (
+                {(['bar', 'line'] as const).map((t, i) => (
                   <button
                     key={t}
                     onClick={() => setChartType(t)}
-                    className={`flex-1 py-2 text-xs font-medium capitalize transition-all
-                      ${chartType === t ? 'bg-brand-primary text-white' : 'bg-surface text-gray-600 hover:bg-gray-50'}`}
+                    className={[
+                      'flex-1 py-2 text-xs font-medium transition-all',
+                      i > 0 ? 'border-l border-border' : '',
+                      chartType === t ? 'bg-brand-primary text-white' : 'bg-surface text-gray-600 hover:bg-gray-50',
+                    ].join(' ')}
                   >
                     {CHART_LABELS[t]}
                   </button>
@@ -129,7 +181,7 @@ export default function ReportBuilderPage() {
                   onClick={handleRun}
                   disabled={!isReady}
                   title={!isReady ? `Vyberte ${missingFields}` : undefined}
-                  className="px-4 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
                 >
                   <Play size={13} />
                   Spustit
@@ -155,15 +207,33 @@ export default function ReportBuilderPage() {
               <h2 className="text-sm font-semibold text-brand-secondary">
                 {result?.headers.join(' × ')}
               </h2>
-              <button
-                onClick={() => refetch()}
-                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-brand-primary transition-colors"
-              >
-                <RefreshCw size={12} />
-                Obnovit
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleDownloadPng}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-brand-primary transition-colors"
+                  title="Stáhnout graf jako PNG"
+                >
+                  <Download size={12} />
+                  PNG
+                </button>
+                <button
+                  onClick={handleDownloadCsv}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-brand-primary transition-colors"
+                  title="Stáhnout data jako CSV"
+                >
+                  <FileDown size={12} />
+                  CSV
+                </button>
+                <button
+                  onClick={() => refetch()}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-brand-primary transition-colors"
+                >
+                  <RefreshCw size={12} />
+                  Obnovit
+                </button>
+              </div>
             </div>
-            <ReactECharts option={chartOption} style={{ height: 320 }} />
+            <ReactECharts ref={chartRef} option={chartOption} style={{ height: 320 }} />
           </div>
         ) : config ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -183,8 +253,15 @@ export default function ReportBuilderPage() {
       {/* Raw data table */}
       {result && result.rows.length > 0 && (
         <div className="bg-white rounded-2xl border border-border">
-          <div className="px-6 py-4 border-b border-border">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
             <h2 className="text-sm font-semibold text-brand-secondary">Surová data ({result.rows.length} řádků)</h2>
+            <button
+              onClick={handleDownloadCsv}
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-brand-primary transition-colors"
+            >
+              <FileDown size={12} />
+              Stáhnout CSV
+            </button>
           </div>
           <div className="overflow-x-auto max-h-64">
             <table className="w-full text-sm">
