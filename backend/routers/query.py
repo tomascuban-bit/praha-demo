@@ -20,6 +20,20 @@ SCHEMA = {
     },
 }
 
+LABEL_MAP: dict[str, str] = {
+    "measured_from": "Datum/hodina",
+    "counter_id":    "ID počítadla",
+    "total_count":   "Celkem cyklistů",
+    "direction_a":   "Směr A",
+    "direction_b":   "Směr B",
+}
+
+
+def _fmt_number(val: object) -> str:
+    if isinstance(val, float):
+        return str(int(val)) if val == int(val) else f"{val:_.1f}".replace("_", "\u00a0")
+    return str(val)
+
 DATA_SCHEMA_RESPONSE = {
     "sources": [
         {
@@ -78,12 +92,9 @@ def query_data(
     agg_dict = {m: schema["measures"][m] for m in measure_list}
     grouped = df.groupby(dimension, sort=True).agg(agg_dict).reset_index()
 
-    headers = [dimension] + measure_list
+    friendly_headers = [LABEL_MAP.get(dimension, dimension)] + [LABEL_MAP.get(m, m) for m in measure_list]
     rows = [
-        [str(r[dimension])] + [
-            f"{r[m]:.2f}" if isinstance(r[m], float) else str(r[m])
-            for m in measure_list
-        ]
+        [str(r[dimension])] + [_fmt_number(r[m]) for m in measure_list]
         for _, r in grouped.iterrows()
     ]
-    return {"headers": headers, "rows": rows}
+    return {"headers": friendly_headers, "rows": rows}
