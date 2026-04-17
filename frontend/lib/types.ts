@@ -102,6 +102,7 @@ export interface ParkingDashboardSummary {
   lots_full: number
   lots_available: number
   lots_empty: number
+  last_updated: string | null
 }
 
 export interface ParkingByOperator {

@@ -211,15 +211,33 @@ export default function ParkingPage() {
   return (
     <div className="max-w-screen-2xl mx-auto px-6 py-8 space-y-8">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <ParkingCircle size={20} className="text-brand-primary" />
-          <h1 className="text-2xl font-bold text-brand-secondary">Obsazenost P+R parkovišť</h1>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <ParkingCircle size={20} className="text-brand-primary" />
+            <h1 className="text-2xl font-bold text-brand-secondary">Obsazenost P+R parkovišť</h1>
+          </div>
+          <p className="text-sm text-gray-500">
+            Aktuální dostupnost z monitorovaných P+R parkovišť TSK Praha.
+            Data přes otevřenou platformu Golemio, obnovována každé ~2 hodiny.
+          </p>
         </div>
-        <p className="text-sm text-gray-500">
-          Aktuální dostupnost z monitorovaných P+R parkovišť TSK Praha.
-          Data přes otevřenou platformu Golemio, obnovována každé ~2 hodiny.
-        </p>
+        {summary?.last_updated && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface border border-border text-xs text-gray-500 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+            Aktualizováno{' '}
+            <span className="font-medium text-brand-secondary">
+              {new Date(summary.last_updated).toLocaleString('cs-CZ', {
+                timeZone: 'Europe/Prague',
+                day: 'numeric',
+                month: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* KPI cards */}

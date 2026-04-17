@@ -51,12 +51,19 @@ def parking_summary():
     df = _pk()
     if df.empty:
         return {"total_lots": 0, "total_spots": 0, "free_spots": 0, "occupied_spots": 0,
-                "pct_free": 0.0, "lots_full": 0, "lots_available": 0, "lots_empty": 0}
+                "pct_free": 0.0, "lots_full": 0, "lots_available": 0, "lots_empty": 0,
+                "last_updated": None}
 
     total_spots = int(df["total_spots"].sum())
     free_spots = int(df["free_spots"].sum())
     occupied_spots = int(df["occupied_spots"].sum())
     pct_free = round(free_spots / total_spots * 100, 1) if total_spots else 0.0
+
+    last_updated: str | None = None
+    if "last_updated" in df.columns:
+        ts = pd.to_datetime(df["last_updated"], errors="coerce", utc=True).dropna()
+        if not ts.empty:
+            last_updated = ts.max().isoformat()
 
     return {
         "total_lots":     len(df),
@@ -67,6 +74,7 @@ def parking_summary():
         "lots_full":      int((df["pct_full"] >= 90).sum()),
         "lots_available": int(((df["pct_full"] >= 25) & (df["pct_full"] < 90)).sum()),
         "lots_empty":     int((df["pct_full"] < 25).sum()),
+        "last_updated":   last_updated,
     }
 
 
