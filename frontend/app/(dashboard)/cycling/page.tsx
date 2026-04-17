@@ -58,10 +58,14 @@ export default function CyclingPage() {
 
   const topCounters = (byCounter ?? []).slice(0, 10)
 
+  // Detect how many days of data are actually available
+  const availableDays = trend && trend.length > 0 ? trend.length : null
+  const dataLimited = availableDays !== null && availableDays < days
+
   return (
     <div className="max-w-screen-2xl mx-auto px-6 py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Bike size={20} className="text-brand-accent" />
@@ -69,19 +73,39 @@ export default function CyclingPage() {
           </div>
           <p className="text-sm text-gray-500">Data z počítadel kol Golemio — hodinová měření indukčních smyček</p>
         </div>
-        <div className="flex gap-2">
-          {DAY_OPTIONS.map(d => (
-            <button
-              key={d}
-              onClick={() => setDays(d)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all
-                ${days === d ? 'bg-brand-accent text-white' : 'bg-white border border-border text-gray-600 hover:border-brand-accent/50'}`}
-            >
-              {d} dní
-            </button>
-          ))}
+        {/* Segmented range control */}
+        <div className="flex rounded-xl border border-border overflow-hidden bg-white shrink-0">
+          {DAY_OPTIONS.map((d, i) => {
+            const exceeds = availableDays !== null && d > availableDays
+            return (
+              <button
+                key={d}
+                onClick={() => setDays(d)}
+                title={exceeds ? `K dispozici pouze ${availableDays} dní dat` : undefined}
+                className={[
+                  'px-3 py-1.5 text-xs font-medium transition-all',
+                  i > 0 ? 'border-l border-border' : '',
+                  days === d
+                    ? 'bg-brand-accent text-white'
+                    : exceeds
+                      ? 'text-gray-300 cursor-not-allowed'
+                      : 'text-gray-600 hover:bg-surface',
+                ].join(' ')}
+              >
+                {d} dní
+              </button>
+            )
+          })}
         </div>
       </div>
+
+      {/* Data availability notice */}
+      {dataLimited && (
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+          <span>⚠</span>
+          <span>Data dostupná pouze za poslední <strong>{availableDays} {availableDays === 1 ? 'den' : availableDays !== null && availableDays < 5 ? 'dny' : 'dní'}</strong>. Rozsah <strong>{days} dní</strong> bude dostupný po delším sběru dat.</span>
+        </div>
+      )}
 
       {/* Charts row */}
       <div className="grid lg:grid-cols-2 gap-6">
@@ -102,7 +126,10 @@ export default function CyclingPage() {
       {/* Top counters table */}
       <div className="bg-white rounded-2xl border border-border">
         <div className="px-6 py-4 border-b border-border">
-          <h2 className="text-sm font-semibold text-brand-secondary">Nejaktivnější počítadla — posl. {days} dní</h2>
+          <h2 className="text-sm font-semibold text-brand-secondary">
+            Nejaktivnější počítadla — posl. {dataLimited ? availableDays : days} dní
+            {dataLimited && <span className="ml-1 font-normal text-gray-400">(z {days} požadovaných)</span>}
+          </h2>
         </div>
         {counterLoading ? (
           <div className="p-6 space-y-3">
