@@ -92,6 +92,55 @@ export interface TrafficByDetector {
   road?: string
 }
 
+// Map data
+export interface BicycleCounterMapPoint {
+  id: string
+  name: string
+  lat: number
+  lon: number
+  route: string
+  count_7d: number
+}
+
+export interface TrafficDetectorMapPoint {
+  id: string
+  name: string
+  lat: number
+  lon: number
+  road: string
+  intensity: number
+  avg_speed: number | null
+}
+
+export interface AirQualityMapPoint {
+  id: string
+  name: string
+  lat: number
+  lon: number
+  district: string
+  aq_index: number | null
+  updated_at: string
+}
+
+export interface MapDataResponse {
+  bicycle_counters: BicycleCounterMapPoint[]
+  traffic_detectors: TrafficDetectorMapPoint[]
+  air_quality: AirQualityMapPoint[]
+}
+
+// Parking
+export interface ParkingSummary {
+  total_spots: number
+  free_spots: number
+  occupied_spots: number
+  pct_free: number
+  num_lots: number
+}
+export interface ParkingResponse {
+  summary: ParkingSummary
+  lots: Record<string, unknown>[]
+}
+
 // Report builder
 export interface DataSchemaSource {
   id: string

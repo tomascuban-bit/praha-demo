@@ -2,23 +2,38 @@
 
 import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
-import { Bike, Car, Gauge, Radio, TrendingUp, Activity } from 'lucide-react'
+import { Bike, Car, Gauge, Radio, TrendingUp, Activity, PersonStanding, Wind, ParkingCircle } from 'lucide-react'
 import { useKpis, useOverviewChart } from '@/lib/api'
 import { formatCount, formatSpeed, COLORS } from '@/lib/constants'
 import type { KpiItem } from '@/lib/types'
 
 const ICON_MAP: Record<string, React.ReactNode> = {
-  bike:   <Bike size={18} />,
-  car:    <Car size={18} />,
-  speed:  <Gauge size={18} />,
-  sensor: <Radio size={18} />,
-  trend:  <TrendingUp size={18} />,
+  bike:    <Bike size={18} />,
+  car:     <Car size={18} />,
+  speed:   <Gauge size={18} />,
+  sensor:  <Radio size={18} />,
+  trend:   <TrendingUp size={18} />,
+  walk:    <PersonStanding size={18} />,
+  air:     <Wind size={18} />,
+  parking: <ParkingCircle size={18} />,
 }
 
 function KpiCard({ item }: { item: KpiItem }) {
   const icon = ICON_MAP[item.icon || ''] ?? <Activity size={18} />
   const isSpeed = item.icon === 'speed'
-  const displayValue = isSpeed ? formatSpeed(item.value) : formatCount(item.value)
+  const isPercent = (item as KpiItem & { unit?: string }).unit === '%'
+  const value = item.value
+
+  let displayValue: string
+  if (value == null) {
+    displayValue = '—'
+  } else if (isSpeed) {
+    displayValue = formatSpeed(value)
+  } else if (isPercent) {
+    displayValue = `${value}%`
+  } else {
+    displayValue = formatCount(value)
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-border p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
@@ -103,13 +118,13 @@ export default function OverviewPage() {
 
       {/* KPI cards */}
       {kpisLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="bg-white rounded-2xl border border-border p-5 h-36 animate-pulse" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {kpis?.map(kpi => <KpiCard key={kpi.label} item={kpi} />)}
         </div>
       )}
@@ -130,14 +145,20 @@ export default function OverviewPage() {
         <h3 className="text-sm font-semibold text-brand-secondary mb-3">About This Dashboard</h3>
         <div className="grid md:grid-cols-2 gap-4 text-xs text-gray-600 leading-relaxed">
           <div>
-            <span className="font-medium text-brand-secondary">Bicycle Counters</span> — Golemio API provides hourly
-            passage counts from induction loop sensors installed on Prague's cycling infrastructure.
-            Data is extracted daily via Keboola and stored in Snowflake.
+            <span className="font-medium text-brand-secondary">Bicycle & Pedestrian Counters</span> — Golemio API provides hourly
+            passage counts from induction loop sensors installed on Prague's cycling infrastructure. Pedestrian counts come from the same sensors at shared paths.
           </div>
           <div>
-            <span className="font-medium text-brand-secondary">Traffic Detectors</span> — Prague city traffic monitoring
-            stations measure vehicle intensity (vehicles/hour), speed, and occupancy. Extracted via Keboola
-            Generic REST extractor from the Golemio REST API.
+            <span className="font-medium text-brand-secondary">Traffic Detectors</span> — Prague city transit vehicle positions
+            (buses, trams, metro) used as a traffic proxy. Extracted via Keboola from the Golemio REST API.
+          </div>
+          <div>
+            <span className="font-medium text-brand-secondary">Air Quality</span> — CHMI (Czech Hydrometeorological Institute)
+            monitoring stations across Prague districts. AQ index 1=Excellent → 7=Very Bad. Data refreshed every 2 hours.
+          </div>
+          <div>
+            <span className="font-medium text-brand-secondary">Parking</span> — Real-time parking occupancy from monitored
+            lots across Prague. Refreshed every 2 hours via Keboola pipeline from Golemio open data.
           </div>
         </div>
       </div>

@@ -34,6 +34,8 @@ TABLE_IDS: dict[str, str] = {
     "bicycle_measurements": "out.c-Praha-Demo-Golemio-to-Output-Tables.bicycle_measurements",
     "traffic_detectors":    "out.c-Praha-Demo-Golemio-to-Output-Tables.traffic_detectors",
     "traffic_measurements": "out.c-Praha-Demo-Golemio-to-Output-Tables.traffic_measurements",
+    "air_quality_stations": "out.c-Praha-Demo-Golemio-to-Output-Tables.air_quality_stations",
+    "parking_occupancy":    "out.c-Praha-Demo-Golemio-to-Output-Tables.parking_occupancy",
 }
 
 # Module-level data store — populated once by init_data(), read by get_data()

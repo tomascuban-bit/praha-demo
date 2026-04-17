@@ -16,6 +16,8 @@ import type {
   TrafficByDetector,
   DataSchemaResponse,
   QueryDataResponse,
+  MapDataResponse,
+  ParkingResponse,
 } from './types'
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
@@ -141,6 +143,32 @@ export function useTrafficHourly(days: number) {
     queryKey: ['traffic-hourly', days],
     queryFn: () => apiFetch(`/api/traffic/hourly?days=${days}`),
     placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ─── Map ─────────────────────────────────────────────────────────────────────
+
+export function useMapData() {
+  return useQuery<MapDataResponse>({
+    queryKey: ['map-data'],
+    queryFn: () => apiFetch('/api/map-data'),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useParking() {
+  return useQuery<ParkingResponse>({
+    queryKey: ['parking'],
+    queryFn: () => apiFetch('/api/environment/parking'),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useAirQuality() {
+  return useQuery({
+    queryKey: ['air-quality'],
+    queryFn: () => apiFetch('/api/environment/air-quality'),
     staleTime: 5 * 60 * 1000,
   })
 }

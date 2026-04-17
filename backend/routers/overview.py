@@ -10,6 +10,8 @@ from services.data_loader import _DATA
 
 router = APIRouter()
 
+_AQ_LABELS = {1: "Excellent", 2: "Very Good", 3: "Good", 4: "Satisfactory", 5: "Poor", 6: "Bad", 7: "Very Bad"}
+
 
 def _safe_numeric(df: pd.DataFrame, col: str) -> pd.Series:
     return pd.to_numeric(df[col], errors="coerce").fillna(0) if col in df.columns else pd.Series(dtype=float)
@@ -22,6 +24,10 @@ def get_kpis():
     tm = _DATA.get("traffic_measurements", pd.DataFrame())
     bc = _DATA.get("bicycle_counters", pd.DataFrame())
     td = _DATA.get("traffic_detectors", pd.DataFrame())
+    _ = _AQ_LABELS  # referenced in KPI description
+
+    aq = _DATA.get("air_quality_stations", pd.DataFrame())
+    pk = _DATA.get("parking_occupancy", pd.DataFrame())
 
     total_cyclists = int(_safe_numeric(bm, "total_count").sum()) if not bm.empty else 0
     total_vehicles = int(_safe_numeric(tm, "intensity").sum()) if not tm.empty else 0
@@ -29,15 +35,38 @@ def get_kpis():
     num_counters = len(bc) if not bc.empty else 0
     num_detectors = len(td) if not td.empty else 0
 
-    # Daily trend: last 7 days cyclists
+    # Daily trend: last 7 days cyclists + pedestrians
     daily_cyclists = 0
+    daily_pedestrians = 0
     if not bm.empty and "measured_from" in bm.columns:
         bm_copy = bm.copy()
         bm_copy["measured_from"] = pd.to_datetime(bm_copy["measured_from"], errors="coerce")
         bm_copy["total_count"] = _safe_numeric(bm_copy, "total_count")
+        bm_copy["total_pedestrians"] = _safe_numeric(bm_copy, "total_pedestrians")
         if not bm_copy["measured_from"].isna().all():
             cutoff = bm_copy["measured_from"].max() - pd.Timedelta(days=7)
-            daily_cyclists = int(bm_copy.loc[bm_copy["measured_from"] >= cutoff, "total_count"].sum())
+            recent = bm_copy.loc[bm_copy["measured_from"] >= cutoff]
+            daily_cyclists = int(recent["total_count"].sum())
+            daily_pedestrians = int(recent["total_pedestrians"].sum())
+
+    # Air quality: average AQ index across all reporting stations
+    avg_aq_index = None
+    if not aq.empty and "aq_index" in aq.columns:
+        aq_vals = pd.to_numeric(aq["aq_index"], errors="coerce").dropna()
+        if len(aq_vals) > 0:
+            avg_aq_index = round(float(aq_vals.mean()), 1)
+
+    # Parking: city-wide free spot pct
+    parking_pct_free = None
+    parking_free = None
+    parking_total = None
+    if not pk.empty:
+        total_spots = pd.to_numeric(pk.get("total_spots", pd.Series()), errors="coerce").fillna(0).sum()
+        free_spots = pd.to_numeric(pk.get("free_spots", pd.Series()), errors="coerce").fillna(0).sum()
+        if total_spots > 0:
+            parking_pct_free = round(float(free_spots) / float(total_spots) * 100, 1)
+            parking_free = int(free_spots)
+            parking_total = int(total_spots)
 
     return [
         {
@@ -55,6 +84,14 @@ def get_kpis():
             "formula": "SUM(total_count) WHERE measured_from >= max_date - 7d",
             "sources": ["bicycle_measurements"],
             "icon": "trend",
+        },
+        {
+            "label": "Pedestrians (7 Days)",
+            "value": daily_pedestrians,
+            "description": "Pedestrian passages at bicycle counter locations in the last 7 days",
+            "formula": "SUM(total_pedestrians) WHERE measured_from >= max_date - 7d",
+            "sources": ["bicycle_measurements"],
+            "icon": "walk",
         },
         {
             "label": "Total Vehicle Passages",
@@ -87,6 +124,23 @@ def get_kpis():
             "formula": "COUNT(*) from traffic_detectors",
             "sources": ["traffic_detectors"],
             "icon": "sensor",
+        },
+        {
+            "label": "Avg Air Quality Index",
+            "value": avg_aq_index,
+            "description": "Average AQ hourly index across all CHMI monitoring stations (1=excellent, 7=very poor; null=no data)",
+            "formula": "AVG(aq_index) from air_quality_stations WHERE aq_index IS NOT NULL",
+            "sources": ["air_quality_stations"],
+            "icon": "air",
+        },
+        {
+            "label": "Parking Availability",
+            "value": parking_pct_free,
+            "description": f"{parking_free} of {parking_total} monitored parking spots currently free" if parking_free is not None else "No parking data",
+            "formula": "SUM(free_spots)/SUM(total_spots)*100 from parking_occupancy",
+            "sources": ["parking_occupancy"],
+            "icon": "parking",
+            "unit": "%",
         },
     ]
 
