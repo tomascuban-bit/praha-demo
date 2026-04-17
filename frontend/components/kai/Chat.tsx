@@ -107,13 +107,29 @@ export function Chat() {
                 className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed
                   ${msg.role === 'user'
                     ? 'bg-brand-primary text-white rounded-br-md'
-                    : 'bg-surface border border-border text-brand-secondary rounded-bl-md'
+                    : msg.hasError
+                      ? 'bg-red-50 border border-red-200 text-red-700 rounded-bl-md'
+                      : 'bg-surface border border-border text-brand-secondary rounded-bl-md'
                   }`}
               >
                 {msg.role === 'assistant' ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none prose-p:my-1 prose-pre:text-xs">
-                    {msg.content || (msg.isStreaming ? '▊' : '')}
-                  </ReactMarkdown>
+                  msg.hasError ? (
+                    <div className="space-y-2">
+                      <p className="text-xs">{msg.content}</p>
+                      {msg.retryText && (
+                        <button
+                          onClick={() => sendMessage(msg.retryText!)}
+                          className="text-xs underline text-red-600 hover:text-red-800"
+                        >
+                          Zkusit znovu
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none prose-p:my-1 prose-pre:text-xs">
+                      {msg.content || (msg.isStreaming ? '▊' : '')}
+                    </ReactMarkdown>
+                  )
                 ) : (
                   msg.content
                 )}

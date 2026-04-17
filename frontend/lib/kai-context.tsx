@@ -7,6 +7,8 @@ export interface KaiMessage {
   role: 'user' | 'assistant'
   content: string
   isStreaming?: boolean
+  hasError?: boolean
+  retryText?: string
 }
 
 interface KaiChatState {
@@ -34,6 +36,10 @@ export function KaiChatProvider({ children }: { children: React.ReactNode }) {
   const clearMessages = useCallback(() => { setMessages([]); setChatId(null) }, [])
 
   const sendMessage = useCallback(async (text: string, existingChatId?: string) => {
+    if (!text.trim()) {
+      console.error('[KAI] sendMessage called with empty text — handler not properly guarded')
+      return
+    }
     const userMsg: KaiMessage = { id: Date.now().toString(), role: 'user', content: text }
     setMessages(prev => [...prev, userMsg])
     setIsLoading(true)
@@ -41,6 +47,15 @@ export function KaiChatProvider({ children }: { children: React.ReactNode }) {
     const assistantId = (Date.now() + 1).toString()
     const assistantMsg: KaiMessage = { id: assistantId, role: 'assistant', content: '', isStreaming: true }
     setMessages(prev => [...prev, assistantMsg])
+
+    const setError = (msg: string) => {
+      console.error('[KAI] Error:', msg)
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId
+          ? { ...m, content: msg, isStreaming: false, hasError: true, retryText: text }
+          : m
+      ))
+    }
 
     try {
       const currentChatId = existingChatId || chatId || `chat-${Date.now()}`
@@ -62,7 +77,12 @@ export function KaiChatProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      if (!startResp.ok) throw new Error(`Chat start failed: ${startResp.status}`)
+      if (!startResp.ok) {
+        const errBody = await startResp.text().catch(() => '')
+        setError(`Odpověď se nepodařilo načíst. Zkuste to prosím znovu. (${startResp.status})`)
+        console.error('[KAI] Chat start failed:', startResp.status, errBody)
+        return
+      }
       const { stream_id } = await startResp.json()
 
       // Poll for events
@@ -71,8 +91,18 @@ export function KaiChatProvider({ children }: { children: React.ReactNode }) {
 
       while (true) {
         const pollResp = await fetch(`/api/chat/${stream_id}/poll?cursor=${cursor}`)
-        if (!pollResp.ok) break
-        const { events, cursor: newCursor, done } = await pollResp.json()
+        if (!pollResp.ok) {
+          setError('Odpověď se nepodařilo načíst. Zkuste to prosím znovu.')
+          break
+        }
+        const { events, cursor: newCursor, done, error: streamError } = await pollResp.json()
+
+        if (streamError) {
+          console.error('[KAI] Stream error from backend:', streamError)
+          setError('Odpověď se nepodařilo načíst. Zkuste to prosím znovu.')
+          break
+        }
+
         cursor = newCursor
 
         for (const eventStr of events) {
@@ -104,11 +134,7 @@ export function KaiChatProvider({ children }: { children: React.ReactNode }) {
         m.id === assistantId ? { ...m, isStreaming: false } : m
       ))
     } catch (err) {
-      setMessages(prev => prev.map(m =>
-        m.id === assistantId
-          ? { ...m, content: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`, isStreaming: false }
-          : m
-      ))
+      setError('Odpověď se nepodařilo načíst. Zkuste to prosím znovu.')
     } finally {
       setIsLoading(false)
     }
