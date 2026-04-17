@@ -8,8 +8,8 @@ DATA SOURCE PRIORITY:
 TABLES:
   - bicycle_counters    : Golemio bicycle counter locations
   - bicycle_measurements: Hourly bicycle count measurements
-  - traffic_detectors   : Traffic measurement station metadata
-  - traffic_measurements: Hourly traffic intensity / speed data
+  - air_quality_stations: CHMI air quality monitoring stations
+  - parking_occupancy   : City parking lot occupancy
 """
 from __future__ import annotations
 
@@ -32,8 +32,6 @@ logger = logging.getLogger(__name__)
 TABLE_IDS: dict[str, str] = {
     "bicycle_counters":     "out.c-Praha-Demo-Golemio-to-Output-Tables.bicycle_counters",
     "bicycle_measurements": "out.c-Praha-Demo-Golemio-to-Output-Tables.bicycle_measurements",
-    "traffic_detectors":    "out.c-Praha-Demo-Golemio-to-Output-Tables.traffic_detectors",
-    "traffic_measurements": "out.c-Praha-Demo-Golemio-to-Output-Tables.traffic_measurements",
     "air_quality_stations": "out.c-Praha-Demo-Golemio-to-Output-Tables.air_quality_stations",
     "parking_occupancy":    "out.c-Praha-Demo-Golemio-to-Output-Tables.parking_occupancy",
 }

@@ -29,7 +29,6 @@ def get_map_data():
     """
     result: dict[str, list] = {
         "bicycle_counters": [],
-        "traffic_detectors": [],
         "air_quality": [],
     }
 
@@ -62,42 +61,6 @@ def get_map_data():
                 "lon": float(row["longitude"]),
                 "route": _s(row.get("route")),
                 "count_7d": counts_7d.get(cid, 0),
-            })
-
-    # ── Traffic detectors with latest intensity ───────────────────────────────
-    td = _DATA.get("traffic_detectors", pd.DataFrame())
-    tm = _DATA.get("traffic_measurements", pd.DataFrame())
-
-    if not td.empty:
-        td_df = td.copy()
-        td_df["latitude"] = pd.to_numeric(td_df.get("latitude"), errors="coerce")
-        td_df["longitude"] = pd.to_numeric(td_df.get("longitude"), errors="coerce")
-        td_df = td_df.dropna(subset=["latitude", "longitude"])
-
-        latest_intensity: dict[str, int] = {}
-        latest_speed: dict[str, float] = {}
-        if not tm.empty and "detector_id" in tm.columns:
-            tm_df = tm.copy()
-            tm_df["intensity"] = pd.to_numeric(tm_df["intensity"], errors="coerce").fillna(0)
-            tm_df["speed"] = pd.to_numeric(tm_df["speed"], errors="coerce")
-            agg = tm_df.groupby("detector_id").agg(
-                intensity=("intensity", "sum"),
-                speed=("speed", "mean"),
-            ).reset_index()
-            latest_intensity = agg.set_index("detector_id")["intensity"].astype(int).to_dict()
-            raw_speed = agg.set_index("detector_id")["speed"].round(1)
-            latest_speed = {k: (None if pd.isna(v) else float(v)) for k, v in raw_speed.items()}
-
-        for _, row in td_df.iterrows():
-            det_id = _s(row.get("id"))
-            result["traffic_detectors"].append({
-                "id": det_id,
-                "name": _s(row.get("name")),
-                "lat": float(row["latitude"]),
-                "lon": float(row["longitude"]),
-                "road": _s(row.get("road")),
-                "intensity": latest_intensity.get(det_id, 0),
-                "avg_speed": latest_speed.get(det_id, None),
             })
 
     # ── Air quality stations ──────────────────────────────────────────────────

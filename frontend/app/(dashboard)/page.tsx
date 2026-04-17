@@ -2,15 +2,13 @@
 
 import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
-import { Bike, Car, Gauge, Radio, TrendingUp, Activity, PersonStanding, Wind, ParkingCircle } from 'lucide-react'
+import { Bike, Radio, TrendingUp, Activity, PersonStanding, Wind, ParkingCircle } from 'lucide-react'
 import { useKpis, useOverviewChart } from '@/lib/api'
 import { formatCount, formatSpeed, COLORS } from '@/lib/constants'
 import type { KpiItem } from '@/lib/types'
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   bike:    <Bike size={18} />,
-  car:     <Car size={18} />,
-  speed:   <Gauge size={18} />,
   sensor:  <Radio size={18} />,
   trend:   <TrendingUp size={18} />,
   walk:    <PersonStanding size={18} />,
@@ -62,23 +60,17 @@ export default function OverviewPage() {
       borderColor: COLORS.border,
       textStyle: { color: COLORS.brandSecondary, fontSize: 12 },
     },
-    legend: {
-      data: ['Cyclists', 'Vehicles'],
-      textStyle: { color: COLORS.brandSecondary, fontSize: 12 },
-      top: 0,
-      right: 0,
-    },
-    grid: { left: 16, right: 16, bottom: 24, top: 32, containLabel: true },
+    grid: { left: 16, right: 16, bottom: 24, top: 16, containLabel: true },
     xAxis: {
       type: 'category',
       data: chart?.map(d => d.date) ?? [],
       axisLabel: { fontSize: 11, color: '#94a3b8', rotate: chart && chart.length > 30 ? 30 : 0 },
       axisLine: { lineStyle: { color: COLORS.border } },
     },
-    yAxis: [
-      { type: 'value', name: 'Cyclists', nameTextStyle: { color: '#94a3b8', fontSize: 11 }, axisLabel: { fontSize: 11, color: '#94a3b8' } },
-      { type: 'value', name: 'Vehicles', nameTextStyle: { color: '#94a3b8', fontSize: 11 }, axisLabel: { fontSize: 11, color: '#94a3b8' } },
-    ],
+    yAxis: {
+      type: 'value',
+      axisLabel: { fontSize: 11, color: '#94a3b8' },
+    },
     series: [
       {
         name: 'Cyclists',
@@ -88,16 +80,6 @@ export default function OverviewPage() {
         itemStyle: { color: COLORS.brandAccent },
         lineStyle: { color: COLORS.brandAccent, width: 2 },
         areaStyle: { color: COLORS.brandAccent + '20' },
-      },
-      {
-        name: 'Vehicles',
-        type: 'line',
-        yAxisIndex: 1,
-        smooth: true,
-        data: chart?.map(d => d.vehicles) ?? [],
-        itemStyle: { color: COLORS.brandPrimary },
-        lineStyle: { color: COLORS.brandPrimary, width: 2 },
-        areaStyle: { color: COLORS.brandPrimary + '15' },
       },
     ],
   }
@@ -131,8 +113,8 @@ export default function OverviewPage() {
 
       {/* Trend chart */}
       <div className="bg-white rounded-2xl border border-border p-6">
-        <h2 className="text-base font-semibold text-brand-secondary mb-1">Daily Mobility Trends</h2>
-        <p className="text-xs text-gray-400 mb-5">Cyclists (left axis) vs. vehicle passages (right axis)</p>
+        <h2 className="text-base font-semibold text-brand-secondary mb-1">Daily Cyclist Trend</h2>
+        <p className="text-xs text-gray-400 mb-5">Total bicycle passages per day across all Golemio counters</p>
         {chartLoading ? (
           <div className="h-72 animate-pulse bg-surface rounded-xl" />
         ) : (
@@ -147,10 +129,6 @@ export default function OverviewPage() {
           <div>
             <span className="font-medium text-brand-secondary">Bicycle & Pedestrian Counters</span> — Golemio API provides hourly
             passage counts from induction loop sensors installed on Prague's cycling infrastructure. Pedestrian counts come from the same sensors at shared paths.
-          </div>
-          <div>
-            <span className="font-medium text-brand-secondary">Traffic Detectors</span> — Prague city transit vehicle positions
-            (buses, trams, metro) used as a traffic proxy. Extracted via Keboola from the Golemio REST API.
           </div>
           <div>
             <span className="font-medium text-brand-secondary">Air Quality</span> — CHMI (Czech Hydrometeorological Institute)

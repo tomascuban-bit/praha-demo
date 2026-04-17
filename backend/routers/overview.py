@@ -21,19 +21,14 @@ def _safe_numeric(df: pd.DataFrame, col: str) -> pd.Series:
 def get_kpis():
     """City-wide KPI cards for the Overview page."""
     bm = _DATA.get("bicycle_measurements", pd.DataFrame())
-    tm = _DATA.get("traffic_measurements", pd.DataFrame())
     bc = _DATA.get("bicycle_counters", pd.DataFrame())
-    td = _DATA.get("traffic_detectors", pd.DataFrame())
     _ = _AQ_LABELS  # referenced in KPI description
 
     aq = _DATA.get("air_quality_stations", pd.DataFrame())
     pk = _DATA.get("parking_occupancy", pd.DataFrame())
 
     total_cyclists = int(_safe_numeric(bm, "total_count").sum()) if not bm.empty else 0
-    total_vehicles = int(_safe_numeric(tm, "intensity").sum()) if not tm.empty else 0
-    avg_speed = round(float(_safe_numeric(tm, "speed").mean()), 1) if not tm.empty else 0.0
     num_counters = len(bc) if not bc.empty else 0
-    num_detectors = len(td) if not td.empty else 0
 
     # Daily trend: last 7 days cyclists + pedestrians
     daily_cyclists = 0
@@ -94,35 +89,11 @@ def get_kpis():
             "icon": "walk",
         },
         {
-            "label": "Total Vehicle Passages",
-            "value": total_vehicles,
-            "description": "Total vehicle intensities recorded across all traffic detectors",
-            "formula": "SUM(intensity) from traffic_measurements",
-            "sources": ["traffic_measurements"],
-            "icon": "car",
-        },
-        {
-            "label": "Avg Traffic Speed",
-            "value": avg_speed,
-            "description": "Average vehicle speed across all measurement periods (km/h)",
-            "formula": "AVG(speed) from traffic_measurements",
-            "sources": ["traffic_measurements"],
-            "icon": "speed",
-        },
-        {
             "label": "Bicycle Counters",
             "value": num_counters,
             "description": "Number of active Golemio bicycle counter stations",
             "formula": "COUNT(*) from bicycle_counters",
             "sources": ["bicycle_counters"],
-            "icon": "sensor",
-        },
-        {
-            "label": "Traffic Detectors",
-            "value": num_detectors,
-            "description": "Number of active traffic measurement stations in Prague",
-            "formula": "COUNT(*) from traffic_detectors",
-            "sources": ["traffic_detectors"],
             "icon": "sensor",
         },
         {
@@ -147,33 +118,18 @@ def get_kpis():
 
 @router.get("/api/overview-chart")
 def get_overview_chart():
-    """Daily cyclists vs vehicles trend for the overview line chart."""
+    """Daily cyclist trend for the overview line chart."""
     bm = _DATA.get("bicycle_measurements", pd.DataFrame())
-    tm = _DATA.get("traffic_measurements", pd.DataFrame())
 
-    result: dict[str, dict] = {}
+    if bm.empty or "measured_from" not in bm.columns:
+        return []
 
-    if not bm.empty and "measured_from" in bm.columns:
-        bm_copy = bm.copy()
-        bm_copy["date"] = pd.to_datetime(bm_copy["measured_from"], errors="coerce").dt.date.astype(str)
-        bm_copy["total_count"] = pd.to_numeric(bm_copy["total_count"], errors="coerce").fillna(0)
-        daily = bm_copy.groupby("date")["total_count"].sum().reset_index()
-        for _, row in daily.iterrows():
-            result.setdefault(str(row["date"]), {})["cyclists"] = int(row["total_count"])
-
-    if not tm.empty and "measured_at" in tm.columns:
-        tm_copy = tm.copy()
-        tm_copy["date"] = pd.to_datetime(tm_copy["measured_at"], errors="coerce").dt.date.astype(str)
-        tm_copy["intensity"] = pd.to_numeric(tm_copy["intensity"], errors="coerce").fillna(0)
-        daily = tm_copy.groupby("date")["intensity"].sum().reset_index()
-        for _, row in daily.iterrows():
-            result.setdefault(str(row["date"]), {})["vehicles"] = int(row["intensity"])
+    bm_copy = bm.copy()
+    bm_copy["date"] = pd.to_datetime(bm_copy["measured_from"], errors="coerce").dt.date.astype(str)
+    bm_copy["total_count"] = pd.to_numeric(bm_copy["total_count"], errors="coerce").fillna(0)
+    daily = bm_copy.groupby("date")["total_count"].sum().reset_index()
 
     return [
-        {
-            "date": date,
-            "cyclists": vals.get("cyclists", 0),
-            "vehicles": vals.get("vehicles", 0),
-        }
-        for date, vals in sorted(result.items())
+        {"date": str(row["date"]), "cyclists": int(row["total_count"])}
+        for _, row in daily.sort_values("date").iterrows()
     ]

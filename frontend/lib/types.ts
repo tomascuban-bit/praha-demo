@@ -34,7 +34,6 @@ export type KpisResponse = KpiItem[]
 export interface OverviewChartPoint {
   date: string
   cyclists: number
-  vehicles: number
 }
 export type OverviewChartResponse = OverviewChartPoint[]
 
@@ -67,31 +66,6 @@ export interface HourlyPoint {
   avg_vehicles?: number
 }
 
-// Traffic detectors
-export interface TrafficDetector {
-  id: string
-  name: string
-  latitude?: string
-  longitude?: string
-  road?: string
-}
-
-export interface TrafficTrendPoint {
-  date: string
-  vehicles: number
-  avg_speed: number | null
-}
-
-export interface TrafficByDetector {
-  detector_id: string
-  total_vehicles: number
-  avg_speed: number
-  name?: string
-  latitude?: string
-  longitude?: string
-  road?: string
-}
-
 // Map data
 export interface BicycleCounterMapPoint {
   id: string
@@ -100,16 +74,6 @@ export interface BicycleCounterMapPoint {
   lon: number
   route: string
   count_7d: number
-}
-
-export interface TrafficDetectorMapPoint {
-  id: string
-  name: string
-  lat: number
-  lon: number
-  road: string
-  intensity: number
-  avg_speed: number | null
 }
 
 export interface AirQualityMapPoint {
@@ -124,7 +88,6 @@ export interface AirQualityMapPoint {
 
 export interface MapDataResponse {
   bicycle_counters: BicycleCounterMapPoint[]
-  traffic_detectors: TrafficDetectorMapPoint[]
   air_quality: AirQualityMapPoint[]
 }
 

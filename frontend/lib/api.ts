@@ -11,9 +11,6 @@ import type {
   CyclingTrendPoint,
   CyclingByCounter,
   HourlyPoint,
-  TrafficDetector,
-  TrafficTrendPoint,
-  TrafficByDetector,
   DataSchemaResponse,
   QueryDataResponse,
   MapDataResponse,
@@ -105,43 +102,6 @@ export function useCyclingHourly(days: number) {
   return useQuery<HourlyPoint[]>({
     queryKey: ['cycling-hourly', days],
     queryFn: () => apiFetch(`/api/cycling/hourly?days=${days}`),
-    placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000,
-  })
-}
-
-// ─── Traffic ─────────────────────────────────────────────────────────────────
-
-export function useTrafficDetectors() {
-  return useQuery<TrafficDetector[]>({
-    queryKey: ['traffic-detectors'],
-    queryFn: () => apiFetch('/api/traffic/detectors'),
-    staleTime: 60 * 60 * 1000,
-  })
-}
-
-export function useTrafficTrend(days: number) {
-  return useQuery<TrafficTrendPoint[]>({
-    queryKey: ['traffic-trend', days],
-    queryFn: () => apiFetch(`/api/traffic/trend?days=${days}`),
-    placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000,
-  })
-}
-
-export function useTrafficByDetector(days: number) {
-  return useQuery<TrafficByDetector[]>({
-    queryKey: ['traffic-by-detector', days],
-    queryFn: () => apiFetch(`/api/traffic/by-detector?days=${days}`),
-    placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000,
-  })
-}
-
-export function useTrafficHourly(days: number) {
-  return useQuery<HourlyPoint[]>({
-    queryKey: ['traffic-hourly', days],
-    queryFn: () => apiFetch(`/api/traffic/hourly?days=${days}`),
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   })

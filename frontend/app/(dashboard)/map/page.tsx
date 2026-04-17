@@ -31,10 +31,6 @@ export default function MapPage() {
           <strong className="text-brand-secondary">{mapData?.bicycle_counters.length ?? '—'}</strong>
         </div>
         <div>
-          <span className="text-gray-500">Traffic detectors</span>{' '}
-          <strong className="text-brand-primary">{mapData?.traffic_detectors.length ?? '—'}</strong>
-        </div>
-        <div>
           <span className="text-gray-500">AQ stations</span>{' '}
           <strong className="text-amber-600">{mapData?.air_quality.length ?? '—'}</strong>
         </div>
@@ -73,10 +69,6 @@ export default function MapPage() {
         <div className="flex items-center gap-1.5">
           <span className="inline-block w-3 h-3 rounded-full bg-[#2DC653]" />
           Bicycle counters — size = 7-day count
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded-full bg-[#D62828]" />
-          Traffic detectors
         </div>
         <div className="flex items-center gap-1.5">
           <span className="inline-block w-3 h-3 rounded-full bg-amber-500" />

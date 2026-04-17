@@ -101,31 +101,6 @@ export default function MapView({ data }: Props) {
           </LayerGroup>
         </Overlay>
 
-        <Overlay checked name="🔴 Traffic Detectors">
-          <LayerGroup>
-            {data.traffic_detectors.map(d => (
-              <CircleMarker
-                key={d.id}
-                center={[d.lat, d.lon]}
-                radius={7}
-                pathOptions={{
-                  color: '#D62828',
-                  fillColor: '#D62828',
-                  fillOpacity: 0.7,
-                  weight: 1.5,
-                }}
-              >
-                <Popup>
-                  <strong>{d.name}</strong><br />
-                  Type: {d.road || '—'}<br />
-                  Passages: <strong>{d.intensity.toLocaleString()}</strong><br />
-                  {d.avg_speed != null && <>Avg speed: <strong>{d.avg_speed} km/h</strong></>}
-                </Popup>
-              </CircleMarker>
-            ))}
-          </LayerGroup>
-        </Overlay>
-
         <Overlay checked name="🟡 Air Quality Stations">
           <LayerGroup>
             {data.air_quality.map(s => (
