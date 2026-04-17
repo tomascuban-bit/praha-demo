@@ -22,21 +22,49 @@ def get_kpis():
     bc = _DATA.get("bicycle_counters", pd.DataFrame())
     pk = _DATA.get("parking_occupancy", pd.DataFrame())
 
-    total_cyclists = int(_safe_numeric(bm, "total_count").sum()) if not bm.empty else 0
     num_counters = len(bc) if not bc.empty else 0
 
     daily_cyclists = 0
     daily_pedestrians = 0
+    cyclists_24h = 0
+    first_kpi_label = "Cyklisté celkem"
+    first_kpi_value = 0
+    first_kpi_desc = "Kumulativní počet průjezdů kol na všech počítadlech Golemio"
+    first_kpi_icon = "bike"
+
     if not bm.empty and "measured_from" in bm.columns:
         bm_copy = bm.copy()
         bm_copy["measured_from"] = pd.to_datetime(bm_copy["measured_from"], errors="coerce")
         bm_copy["total_count"] = _safe_numeric(bm_copy, "total_count")
         bm_copy["total_pedestrians"] = _safe_numeric(bm_copy, "total_pedestrians")
         if not bm_copy["measured_from"].isna().all():
-            cutoff = bm_copy["measured_from"].max() - pd.Timedelta(days=7)
-            recent = bm_copy.loc[bm_copy["measured_from"] >= cutoff]
-            daily_cyclists = int(recent["total_count"].sum())
-            daily_pedestrians = int(recent["total_pedestrians"].sum())
+            max_ts = bm_copy["measured_from"].max()
+            min_ts = bm_copy["measured_from"].min()
+            span_days = (max_ts - min_ts).days
+
+            cutoff_7d = max_ts - pd.Timedelta(days=7)
+            recent_7d = bm_copy.loc[bm_copy["measured_from"] >= cutoff_7d]
+            daily_cyclists = int(recent_7d["total_count"].sum())
+            daily_pedestrians = int(recent_7d["total_pedestrians"].sum())
+
+            cutoff_24h = max_ts - pd.Timedelta(hours=24)
+            cyclists_24h = int(bm_copy.loc[bm_copy["measured_from"] >= cutoff_24h, "total_count"].sum())
+
+            if span_days >= 7:
+                # Enough history — show true cumulative total
+                total_cyclists = int(bm_copy["total_count"].sum())
+                date_from = min_ts.strftime("%-d. %-m.")
+                date_to = max_ts.strftime("%-d. %-m. %Y")
+                first_kpi_label = "Cyklisté celkem"
+                first_kpi_value = total_cyclists
+                first_kpi_desc = f"Za celé dostupné období ({date_from} – {date_to})"
+                first_kpi_icon = "bike"
+            else:
+                # Less than 7 days of data — show 24 h instead to avoid duplicate
+                first_kpi_label = "Cyklisté – posl. 24 h"
+                first_kpi_value = cyclists_24h
+                first_kpi_desc = "Průjezdy kol za posledních 24 hodin (aktuální den)"
+                first_kpi_icon = "trend"
 
     # Parkování — pouze TSK Praha P+R
     parking_pct_free = None
@@ -53,17 +81,17 @@ def get_kpis():
 
     return [
         {
-            "label": "Cyklisté celkem",
-            "value": total_cyclists,
-            "description": "Kumulativní počet průjezdů kol na všech počítadlech Golemio",
+            "label": first_kpi_label,
+            "value": first_kpi_value,
+            "description": first_kpi_desc,
             "formula": "SUM(total_count) from bicycle_measurements",
             "sources": ["bicycle_measurements"],
-            "icon": "bike",
+            "icon": first_kpi_icon,
         },
         {
             "label": "Cyklisté – posl. 7 dní",
             "value": daily_cyclists,
-            "description": "Průjezdy kol v posledním 7denním okně",
+            "description": "Průjezdy kol za posledních 7 dní",
             "formula": "SUM(total_count) WHERE measured_from >= max_date - 7d",
             "sources": ["bicycle_measurements"],
             "icon": "trend",
