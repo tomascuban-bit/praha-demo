@@ -23,8 +23,11 @@ export default function ReportBuilderPage() {
   const sources = schema?.sources ?? []
   const selectedSource = sources.find(s => s.id === pending.source)
 
+  const isReady = !!(pending.source && pending.dimension && pending.measures?.length)
+  const missingFields = !pending.source ? 'zdroj dat' : !pending.dimension ? 'dimenzi' : 'ukazatel'
+
   const handleRun = () => {
-    if (!pending.source || !pending.dimension || !pending.measures?.length) return
+    if (!isReady) return
     setConfig(pending as ChartConfig)
   }
 
@@ -121,14 +124,20 @@ export default function ReportBuilderPage() {
                   </button>
                 ))}
               </div>
-              <button
-                onClick={handleRun}
-                disabled={!pending.source || !pending.dimension || !pending.measures?.length}
-                className="px-4 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
-              >
-                <Play size={13} />
-                Spustit
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  onClick={handleRun}
+                  disabled={!isReady}
+                  title={!isReady ? `Vyberte ${missingFields}` : undefined}
+                  className="px-4 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
+                >
+                  <Play size={13} />
+                  Spustit
+                </button>
+                {!isReady && (
+                  <span className="text-[10px] text-gray-400">Vyberte {missingFields}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -155,6 +164,12 @@ export default function ReportBuilderPage() {
               </button>
             </div>
             <ReactECharts option={chartOption} style={{ height: 320 }} />
+          </div>
+        ) : config ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <BarChart2 size={36} className="text-gray-200 mb-3" />
+            <p className="text-sm font-medium text-gray-400">Žádná data pro tuto kombinaci</p>
+            <p className="text-xs text-gray-300 mt-1">Zkuste jiný zdroj nebo dimenzi</p>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">

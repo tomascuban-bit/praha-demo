@@ -4,7 +4,7 @@ import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { Bike } from 'lucide-react'
 import { useCyclingTrend, useCyclingByCounter, useCyclingHourly } from '@/lib/api'
-import { formatCount, COLORS } from '@/lib/constants'
+import { formatCount, pluralize, COLORS } from '@/lib/constants'
 
 const DAY_OPTIONS = [7, 14, 30, 90]
 
@@ -103,7 +103,7 @@ export default function CyclingPage() {
       {dataLimited && (
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
           <span>⚠</span>
-          <span>Data dostupná pouze za poslední <strong>{availableDays} {availableDays === 1 ? 'den' : availableDays !== null && availableDays < 5 ? 'dny' : 'dní'}</strong>. Rozsah <strong>{days} dní</strong> bude dostupný po delším sběru dat.</span>
+          <span>Data dostupná pouze za poslední <strong>{availableDays} {availableDays !== null && pluralize(availableDays, { one: 'den', few: 'dny', many: 'dní' })}</strong>. Rozsah <strong>{days} dní</strong> bude dostupný po delším sběru dat.</span>
         </div>
       )}
 

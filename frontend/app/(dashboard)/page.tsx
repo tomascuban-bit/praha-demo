@@ -4,7 +4,7 @@ import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { Bike, Radio, TrendingUp, Activity, PersonStanding, ParkingCircle } from 'lucide-react'
 import { useKpis, useOverviewChart } from '@/lib/api'
-import { formatCount, formatSpeed, COLORS } from '@/lib/constants'
+import { formatCount, formatSpeed, pluralize, COLORS } from '@/lib/constants'
 import type { KpiItem } from '@/lib/types'
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -48,9 +48,13 @@ function KpiCard({ item }: { item: KpiItem }) {
   )
 }
 
+const DAY_OPTIONS = [7, 14, 30, 90]
+
 export default function OverviewPage() {
+  const [days, setDays] = useState(30)
   const { data: kpis, isLoading: kpisLoading } = useKpis()
-  const { data: chart, isLoading: chartLoading } = useOverviewChart()
+  const { data: chart, isLoading: chartLoading } = useOverviewChart(days)
+  const availableDays = chart && chart.length > 0 ? chart.length : null
 
   const chartOption = {
     tooltip: {
@@ -63,7 +67,7 @@ export default function OverviewPage() {
     xAxis: {
       type: 'category',
       data: chart?.map(d => d.date) ?? [],
-      axisLabel: { fontSize: 11, color: '#94a3b8', rotate: chart && chart.length > 30 ? 30 : 0 },
+      axisLabel: { fontSize: 11, color: '#94a3b8', rotate: days > 30 ? 30 : 0 },
       axisLine: { lineStyle: { color: COLORS.border } },
     },
     yAxis: {
@@ -112,8 +116,41 @@ export default function OverviewPage() {
 
       {/* Trend chart */}
       <div className="bg-white rounded-2xl border border-border p-6">
-        <h2 className="text-base font-semibold text-brand-secondary mb-1">Denní trend cyklistů</h2>
-        <p className="text-xs text-gray-400 mb-5">Celkový počet průjezdů kol za den na všech počítadlech Golemio</p>
+        <div className="flex items-start justify-between gap-4 mb-1">
+          <div>
+            <h2 className="text-base font-semibold text-brand-secondary">Denní trend cyklistů</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Celkový počet průjezdů kol za den na všech počítadlech Golemio</p>
+          </div>
+          <div className="flex rounded-xl border border-border overflow-hidden bg-white shrink-0">
+            {DAY_OPTIONS.map((d, i) => {
+              const exceeds = availableDays !== null && d > availableDays
+              return (
+                <button
+                  key={d}
+                  onClick={() => !exceeds && setDays(d)}
+                  title={exceeds ? `K dispozici pouze ${availableDays} dní dat` : undefined}
+                  className={[
+                    'px-3 py-1.5 text-xs font-medium transition-all',
+                    i > 0 ? 'border-l border-border' : '',
+                    days === d
+                      ? 'bg-brand-accent text-white'
+                      : exceeds
+                        ? 'text-gray-300 cursor-not-allowed'
+                        : 'text-gray-600 hover:bg-surface',
+                  ].join(' ')}
+                >
+                  {d} dní
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        {availableDays !== null && availableDays < days && (
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs mb-4">
+            <span>⚠</span>
+            <span>Data dostupná pouze za poslední <strong>{availableDays} {availableDays !== null && pluralize(availableDays, { one: 'den', few: 'dny', many: 'dní' })}</strong>. Rozsah <strong>{days} dní</strong> bude dostupný po delším sběru dat.</span>
+          </div>
+        )}
         {chartLoading ? (
           <div className="h-72 animate-pulse bg-surface rounded-xl" />
         ) : (

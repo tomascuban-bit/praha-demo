@@ -34,3 +34,9 @@ export function formatCompact(value: number): string {
   if (abs >= 1_000)     return `${(value / 1_000).toFixed(0)}k`
   return `${Math.round(value)}`
 }
+
+export function pluralize(n: number, { one, few, many }: { one: string; few: string; many: string }): string {
+  if (n === 1) return one
+  if (n >= 2 && n <= 4) return few
+  return many
+}

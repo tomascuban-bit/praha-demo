@@ -67,11 +67,12 @@ export function useKpis() {
   })
 }
 
-export function useOverviewChart() {
+export function useOverviewChart(days: number = 30) {
   return useQuery<OverviewChartResponse>({
-    queryKey: ['overview-chart'],
-    queryFn: () => apiFetch('/api/overview-chart'),
+    queryKey: ['overview-chart', days],
+    queryFn: () => apiFetch(`/api/overview-chart?days=${days}`),
     staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   })
 }
 

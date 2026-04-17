@@ -14,7 +14,7 @@ type ChartView = 'pct' | 'abs'
 
 const FILL_COLORS: Record<string, string> = {
   '0–25 % obsazeno':    '#2DC653',
-  '25–50 % obsazeno':   '#86efac',
+  '25–50 % obsazeno':   '#74c69d',
   '50–75 % obsazeno':   '#f59e0b',
   '75–90 % obsazeno':   '#f97316',
   '90–100 % obsazeno':  '#ef4444',
@@ -152,6 +152,10 @@ export default function ParkingPage() {
       right: 8,
       top: 'center',
       textStyle: { color: '#64748b', fontSize: 11 },
+      formatter: (name: string) => {
+        const item = (distribution ?? []).find(d => d.bucket === name)
+        return item ? `${name}  (${item.lot_count})` : name
+      },
     },
     series: [{
       name: 'Obsazenost',

@@ -4,7 +4,7 @@ Přehled — celostátní KPI a trendy pro Praha Demo.
 from __future__ import annotations
 
 import pandas as pd
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from services.data_loader import _DATA
 
@@ -125,7 +125,7 @@ def get_kpis():
 
 
 @router.get("/api/overview-chart")
-def get_overview_chart():
+def get_overview_chart(days: int = Query(30, ge=1, le=365)):
     """Denní trend cyklistů pro přehledový graf."""
     bm = _DATA.get("bicycle_measurements", pd.DataFrame())
 
@@ -133,7 +133,10 @@ def get_overview_chart():
         return []
 
     bm_copy = bm.copy()
-    bm_copy["date"] = pd.to_datetime(bm_copy["measured_from"], errors="coerce").dt.date.astype(str)
+    bm_copy["dt"] = pd.to_datetime(bm_copy["measured_from"], errors="coerce")
+    cutoff = bm_copy["dt"].max() - pd.Timedelta(days=days - 1)
+    bm_copy = bm_copy[bm_copy["dt"] >= cutoff]
+    bm_copy["date"] = bm_copy["dt"].dt.date.astype(str)
     bm_copy["total_count"] = pd.to_numeric(bm_copy["total_count"], errors="coerce").fillna(0)
     daily = bm_copy.groupby("date")["total_count"].sum().reset_index()
 

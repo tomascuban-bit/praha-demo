@@ -25,7 +25,7 @@ export default function Header() {
             <span className="font-semibold text-brand-secondary text-sm">Praha Demo</span>
             <span className="ml-2 text-xs text-gray-400 hidden sm:inline">Přehled mobility Prahy</span>
           </div>
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-brand-primary/10 text-brand-primary text-[10px] font-semibold uppercase tracking-wide">
+          <span className="ml-2 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-medium uppercase tracking-wide">
             Golemio Open Data
           </span>
         </div>
@@ -46,10 +46,10 @@ export default function Header() {
 
           <button
             onClick={openChat}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all
               ${isOpen
-                ? 'bg-brand-secondary text-white'
-                : 'bg-brand-primary/10 text-brand-primary hover:bg-brand-primary hover:text-white'
+                ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                : 'border-border text-gray-500 hover:border-brand-primary hover:text-brand-primary'
               }`}
           >
             <MessageSquare size={15} />
