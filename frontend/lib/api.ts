@@ -15,6 +15,10 @@ import type {
   QueryDataResponse,
   MapDataResponse,
   ParkingResponse,
+  ParkingDashboardSummary,
+  ParkingByOperator,
+  ParkingLot,
+  ParkingDistributionPoint,
 } from './types'
 
 
@@ -122,6 +126,40 @@ export function useParking() {
   return useQuery<ParkingResponse>({
     queryKey: ['parking'],
     queryFn: () => apiFetch('/api/environment/parking'),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ─── Parking dashboard ───────────────────────────────────────────────────────
+
+export function useParkingSummary() {
+  return useQuery<ParkingDashboardSummary>({
+    queryKey: ['parking-summary'],
+    queryFn: () => apiFetch('/api/parking/summary'),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useParkingByOperator() {
+  return useQuery<ParkingByOperator[]>({
+    queryKey: ['parking-by-operator'],
+    queryFn: () => apiFetch('/api/parking/by-operator'),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useParkingLots() {
+  return useQuery<ParkingLot[]>({
+    queryKey: ['parking-lots'],
+    queryFn: () => apiFetch('/api/parking/lots'),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useParkingDistribution() {
+  return useQuery<ParkingDistributionPoint[]>({
+    queryKey: ['parking-distribution'],
+    queryFn: () => apiFetch('/api/parking/distribution'),
     staleTime: 5 * 60 * 1000,
   })
 }

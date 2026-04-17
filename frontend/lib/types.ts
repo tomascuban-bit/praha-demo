@@ -80,7 +80,47 @@ export interface MapDataResponse {
   bicycle_counters: BicycleCounterMapPoint[]
 }
 
-// Parking
+// Parking dashboard
+export interface ParkingDashboardSummary {
+  total_lots: number
+  total_spots: number
+  free_spots: number
+  occupied_spots: number
+  pct_free: number
+  lots_full: number
+  lots_available: number
+  lots_empty: number
+}
+
+export interface ParkingByOperator {
+  source: string
+  label: string
+  lot_count: number
+  total_spots: number
+  free_spots: number
+  occupied_spots: number
+  pct_full: number
+}
+
+export interface ParkingLot {
+  parking_id: string
+  source: string
+  label: string
+  total_spots: number
+  free_spots: number
+  occupied_spots: number
+  pct_full: number
+  has_free_spots: boolean
+  last_updated: string
+}
+
+export interface ParkingDistributionPoint {
+  bucket: string
+  lot_count: number
+  total_spots: number
+}
+
+// Parking (legacy environment endpoint)
 export interface ParkingSummary {
   total_spots: number
   free_spots: number

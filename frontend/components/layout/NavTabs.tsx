@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Bike, BarChart2, Map } from 'lucide-react'
+import { LayoutDashboard, Bike, BarChart2, Map, ParkingCircle } from 'lucide-react'
 
 const TABS = [
   { href: '/',         label: 'Overview',  icon: LayoutDashboard },
   { href: '/cycling',  label: 'Cycling',   icon: Bike },
+  { href: '/parking',  label: 'Parking',   icon: ParkingCircle },
   { href: '/map',      label: 'City Map',  icon: Map },
   { href: '/custom',   label: 'Reports',   icon: BarChart2 },
 ]

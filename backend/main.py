@@ -145,13 +145,14 @@ app.add_middleware(
 )
 
 # ─── Routers ───────────────────────────────────────────────────────────────────
-from routers import overview, cycling, query, environment, map_data  # noqa: E402
+from routers import overview, cycling, query, environment, map_data, parking  # noqa: E402
 
 app.include_router(overview.router)
 app.include_router(cycling.router)
 app.include_router(query.router)
 app.include_router(environment.router)
 app.include_router(map_data.router)
+app.include_router(parking.router)
 
 
 # ─── Core endpoints ────────────────────────────────────────────────────────────
