@@ -10,19 +10,25 @@ from services.data_loader import _DATA
 
 router = APIRouter()
 
-# Coordinates and names for Prague TSK P+R lots (from Golemio /v3/parking/{id})
-# 7 of the 17 lots return null centroid from Golemio — omitted from map layer
+# Coordinates and names for all 17 Prague TSK P+R lots (from Golemio /v3/parking/{id})
 PARKING_LOCATIONS: dict[str, dict] = {
-    "tsk-offstreet-f589ef8e-1209-4793-87ba-7e405839f506": {"lat": 50.0532, "lon": 14.2913, "name": "P+R Zličín 1"},
-    "tsk-offstreet-360e4af6-3a4e-433b-49bb-cbb4c773f9cf": {"lat": 50.0546, "lon": 14.2898, "name": "P+R Zličín 2"},
-    "tsk-offstreet-67000fcd-d2d1-4861-8de1-4afd35c706c0": {"lat": 50.0521, "lon": 14.3500, "name": "P+R Nové Butovice"},
-    "tsk-offstreet-0de6185c-f3a8-4ce6-b684-bdb6d95fe737": {"lat": 50.0612, "lon": 14.4293, "name": "P+R Kongresové centrum"},
-    "tsk-offstreet-4145ef72-c325-41c9-8b34-2af23290f942": {"lat": 50.0385, "lon": 14.4770, "name": "P+R Opatov"},
-    "tsk-offstreet-b567b2eb-b89c-4549-846a-e82cbda1dcf9": {"lat": 50.0704, "lon": 14.5116, "name": "P+R Skalka 1"},
-    "tsk-offstreet-bba3106f-e408-466f-8f75-bbd919ee4efa": {"lat": 50.0708, "lon": 14.5122, "name": "P+R Skalka 2"},
-    "tsk-offstreet-58b9c5cc-02e0-468d-b8a6-a3e49a528025": {"lat": 50.1070, "lon": 14.5627, "name": "P+R Rajská zahrada"},
-    "tsk-offstreet-8d125ea8-8f76-4045-4792-f6edb76e73f6": {"lat": 50.1100, "lon": 14.5790, "name": "P+R Černý Most"},
-    "tsk-offstreet-f01831c1-415d-463d-b51f-1a91ba7bd4ed": {"lat": 50.0986, "lon": 14.4165, "name": "P+R Holešovice"},
+    "tsk-offstreet-6b737fe9-6f24-450c-9868-819cb9377ad8": {"lat": 50.109993, "lon": 14.578965, "name": "P+R Garáže Černý Most"},
+    "tsk-offstreet-f589ef8e-1209-4793-87ba-7e405839f506": {"lat": 50.061188, "lon": 14.429288, "name": "P+R Kongresové centrum Praha"},
+    "tsk-offstreet-67000fcd-d2d1-4861-8de1-4afd35c706c0": {"lat": 50.081032, "lon": 14.433357, "name": "Muzeum"},
+    "tsk-offstreet-b567b2eb-b89c-4549-846a-e82cbda1dcf9": {"lat": 50.098620, "lon": 14.416533, "name": "Letná"},
+    "tsk-offstreet-58b9c5cc-02e0-468d-b8a6-a3e49a528025": {"lat": 50.052086, "lon": 14.349985, "name": "P+R Nové Butovice"},
+    "tsk-offstreet-bba3106f-e408-466f-8f75-bbd919ee4efa": {"lat": 50.068458, "lon": 14.357180, "name": "P+R Kotlářka"},
+    "tsk-offstreet-4145ef72-c325-41c9-8b34-2af23290f942": {"lat": 50.110351, "lon": 14.582407, "name": "P+R Černý most 2"},
+    "tsk-offstreet-f01831c1-415d-463d-b51f-1a91ba7bd4ed": {"lat": 50.026619, "lon": 14.509140, "name": "P+R Opatov"},
+    "tsk-offstreet-0de6185c-f3a8-4ce6-b684-bdb6d95fe737": {"lat": 50.038511, "lon": 14.476998, "name": "P+R Roztyly"},
+    "tsk-offstreet-52551797-f7f0-44e0-8e06-988c96ab319f": {"lat": 50.069501, "lon": 14.507758, "name": "P+R Skalka 1"},
+    "tsk-offstreet-0a25bd51-0851-4766-b884-e5bf8cf0aac7": {"lat": 50.054594, "lon": 14.289794, "name": "P+R Zličín 1"},
+    "tsk-offstreet-519a4124-9f6c-49c9-89f3-da28b8192ca1": {"lat": 50.107008, "lon": 14.562708, "name": "P+R Rajská zahrada"},
+    "tsk-offstreet-ae77736b-399d-462e-901d-bf91ef7ab96c": {"lat": 50.070360, "lon": 14.511567, "name": "P+R Skalka 2"},
+    "tsk-offstreet-8f1abd57-4366-41a3-b800-3604400a1ec0": {"lat": 50.108952, "lon": 14.441237, "name": "P+R Holešovice"},
+    "tsk-offstreet-eef53536-16f5-4772-b28e-466e9d4fa6c1": {"lat": 50.053156, "lon": 14.291256, "name": "P+R Zličín 2"},
+    "tsk-offstreet-8d125ea8-8f76-4045-4792-f6edb76e73f6": {"lat": 50.083408, "lon": 14.434139, "name": "Hlavní nádraží – Terasa"},
+    "tsk-offstreet-360e4af6-3a4e-433b-49bb-cbb4c773f9cf": {"lat": 50.082692, "lon": 14.434147, "name": "Hlavní nádraží – jih"},
 }
 
 

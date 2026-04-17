@@ -1,19 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
-import { MapContainer, TileLayer, CircleMarker, Popup, LayersControl, LayerGroup } from 'react-leaflet'
+import { useEffect, useMemo } from 'react'
+import { MapContainer, TileLayer, Marker, Popup, LayersControl, LayerGroup } from 'react-leaflet'
 import type { MapDataResponse } from '@/lib/types'
 import 'leaflet/dist/leaflet.css'
 
 const { BaseLayer, Overlay } = LayersControl
-
-function bikeRadius(count: number) {
-  if (count === 0) return 6
-  if (count < 500) return 8
-  if (count < 2000) return 11
-  if (count < 5000) return 14
-  return 17
-}
 
 function parkingColor(pct: number): string {
   if (pct < 25) return '#2DC653'
@@ -23,14 +15,23 @@ function parkingColor(pct: number): string {
   return '#ef4444'
 }
 
+function bikeIconSize(count: number): number {
+  if (count === 0) return 28
+  if (count < 500)  return 32
+  if (count < 2000) return 38
+  if (count < 5000) return 44
+  return 50
+}
+
 interface Props {
   data: MapDataResponse
 }
 
 export default function MapView({ data }: Props) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const L = require('leaflet')
+
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const L = require('leaflet')
     delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -40,6 +41,36 @@ export default function MapView({ data }: Props) {
   }, [])
 
   const maxCount = Math.max(...data.bicycle_counters.map(c => c.count_7d), 1)
+
+  // Build bike icons keyed by counter id
+  const bikeIcons = useMemo(() => new Map(
+    data.bicycle_counters.map(c => {
+      const sz = bikeIconSize(c.count_7d)
+      return [c.id, L.divIcon({
+        html: `<div style="width:${sz}px;height:${sz}px;background:#2DC653;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:${Math.round(sz * 0.5)}px;line-height:1">🚲</div>`,
+        iconSize: [sz, sz],
+        iconAnchor: [sz / 2, sz / 2],
+        popupAnchor: [0, -sz / 2],
+        className: '',
+      })]
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [data.bicycle_counters])
+
+  // Build parking icons keyed by parking_id
+  const parkingIcons = useMemo(() => new Map(
+    (data.parking ?? []).map(p => {
+      const col = parkingColor(p.pct_full)
+      return [p.parking_id, L.divIcon({
+        html: `<div style="width:30px;height:30px;background:${col};border-radius:6px;border:2.5px solid white;box-shadow:0 2px 7px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:white;letter-spacing:-0.5px">P</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -15],
+        className: '',
+      })]
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [data.parking])
 
   return (
     <MapContainer
@@ -62,19 +93,13 @@ export default function MapView({ data }: Props) {
           />
         </BaseLayer>
 
-        <Overlay checked name="🟢 Počítadla kol">
+        <Overlay checked name="🚲 Počítadla kol">
           <LayerGroup>
             {data.bicycle_counters.map(c => (
-              <CircleMarker
+              <Marker
                 key={c.id}
-                center={[c.lat, c.lon]}
-                radius={bikeRadius(c.count_7d)}
-                pathOptions={{
-                  color: '#2DC653',
-                  fillColor: '#2DC653',
-                  fillOpacity: 0.75,
-                  weight: 1.5,
-                }}
+                position={[c.lat, c.lon]}
+                icon={bikeIcons.get(c.id)!}
               >
                 <Popup>
                   <strong>{c.name}</strong><br />
@@ -84,35 +109,28 @@ export default function MapView({ data }: Props) {
                     {Math.round(c.count_7d / maxCount * 100)} % nejfrekventovanějšího počítadla
                   </span>
                 </Popup>
-              </CircleMarker>
+              </Marker>
             ))}
           </LayerGroup>
         </Overlay>
 
         <Overlay checked name="🅿️ P+R parkoviště">
           <LayerGroup>
-            {(data.parking ?? []).map(p => {
-              const col = parkingColor(p.pct_full)
-              return (
-                <CircleMarker
-                  key={p.parking_id}
-                  center={[p.lat, p.lon]}
-                  radius={9}
-                  pathOptions={{
-                    color: col,
-                    fillColor: col,
-                    fillOpacity: 0.85,
-                    weight: 2,
-                  }}
-                >
-                  <Popup>
-                    <strong>{p.name}</strong><br />
-                    Volná místa: <strong>{p.free_spots}</strong> / {p.total_spots}<br />
-                    <span style={{ color: col, fontWeight: 'bold' }}>{p.pct_full.toFixed(0)} % obsazeno</span>
-                  </Popup>
-                </CircleMarker>
-              )
-            })}
+            {(data.parking ?? []).map(p => (
+              <Marker
+                key={p.parking_id}
+                position={[p.lat, p.lon]}
+                icon={parkingIcons.get(p.parking_id)!}
+              >
+                <Popup>
+                  <strong>{p.name}</strong><br />
+                  Volná místa: <strong>{p.free_spots}</strong> / {p.total_spots}<br />
+                  <span style={{ color: parkingColor(p.pct_full), fontWeight: 'bold' }}>
+                    {p.pct_full.toFixed(0)} % obsazeno
+                  </span>
+                </Popup>
+              </Marker>
+            ))}
           </LayerGroup>
         </Overlay>
 

@@ -48,14 +48,16 @@ export default function MapPage() {
       </div>
 
       {/* Legend */}
-      <div className="flex gap-6 px-6 py-2 bg-white border-t border-border text-xs text-gray-500 flex-shrink-0">
+      <div className="flex gap-6 px-6 py-2 bg-white border-t border-border text-xs text-gray-500 flex-shrink-0 flex-wrap">
         <div className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded-full bg-[#2DC653]" />
+          <span className="inline-flex w-5 h-5 rounded-full bg-[#2DC653] items-center justify-center text-[10px]">🚲</span>
           Počítadla kol — velikost = počet za 7 dní
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded-full bg-[#D62828]" />
-          P+R parkoviště — barva = obsazenost
+          <span className="inline-flex w-5 h-5 rounded-[4px] bg-[#2DC653] items-center justify-center text-[10px] font-bold text-white">P</span>
+          <span className="inline-flex w-5 h-5 rounded-[4px] bg-[#f59e0b] items-center justify-center text-[10px] font-bold text-white">P</span>
+          <span className="inline-flex w-5 h-5 rounded-[4px] bg-[#ef4444] items-center justify-center text-[10px] font-bold text-white">P</span>
+          P+R parkoviště — barva = obsazenost (zelená→červená)
         </div>
         <div className="ml-auto">Přepínání vrstev — ovládání vpravo nahoře</div>
       </div>
