@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
 import ReactECharts from 'echarts-for-react'
 import { BarChart2, Play, RefreshCw, Download, FileDown } from 'lucide-react'
 import { useDataSchema, useQueryData } from '@/lib/api'
@@ -14,8 +13,6 @@ interface ChartConfig {
 }
 
 export default function ReportBuilderPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const chartRef = useRef<ReactECharts>(null)
 
   const { data: schema } = useDataSchema()
@@ -25,19 +22,20 @@ export default function ReportBuilderPage() {
 
   const { data: result, isLoading, refetch } = useQueryData(config)
 
-  // Restore state from URL on mount
+  // Restore state from URL on mount (window.location avoids Suspense requirement)
   useEffect(() => {
-    const src = searchParams.get('src')
-    const dim = searchParams.get('dim')
-    const msr = searchParams.get('msr')
-    const ct = searchParams.get('ct') as 'bar' | 'line' | null
+    const sp = new URLSearchParams(window.location.search)
+    const src = sp.get('src')
+    const dim = sp.get('dim')
+    const msr = sp.get('msr')
+    const ct = sp.get('ct') as 'bar' | 'line' | null
     if (src && dim && msr) {
       const cfg: ChartConfig = { source: src, dimension: dim, measures: [msr] }
       setPending(cfg)
       setConfig(cfg)
       if (ct === 'bar' || ct === 'line') setChartType(ct)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   const sources = schema?.sources ?? []
   const selectedSource = sources.find(s => s.id === pending.source)
@@ -55,7 +53,7 @@ export default function ReportBuilderPage() {
       msr: cfg.measures[0],
       ct: chartType,
     })
-    router.replace(`?${params.toString()}`, { scroll: false })
+    window.history.replaceState(null, '', `?${params.toString()}`)
   }
 
   const handleDownloadCsv = () => {
