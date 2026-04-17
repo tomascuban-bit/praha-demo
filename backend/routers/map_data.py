@@ -11,6 +11,16 @@ from services.data_loader import _DATA
 router = APIRouter()
 
 
+def _s(val) -> str:
+    """Return empty string for NaN/None, else str(val)."""
+    return "" if (val is None or (isinstance(val, float) and pd.isna(val))) else str(val)
+
+
+def _f(val) -> float | None:
+    """Return None for NaN, else float(val)."""
+    return None if (val is None or (isinstance(val, float) and pd.isna(val))) else float(val)
+
+
 @router.get("/api/map-data")
 def get_map_data():
     """
@@ -44,13 +54,14 @@ def get_map_data():
                 counts_7d = recent.groupby("counter_id")["total_count"].sum().astype(int).to_dict()
 
         for _, row in bc_df.iterrows():
+            cid = _s(row.get("id"))
             result["bicycle_counters"].append({
-                "id": row.get("id", ""),
-                "name": row.get("name", ""),
+                "id": cid,
+                "name": _s(row.get("name")),
                 "lat": float(row["latitude"]),
                 "lon": float(row["longitude"]),
-                "route": row.get("route", ""),
-                "count_7d": counts_7d.get(str(row.get("id", "")), 0),
+                "route": _s(row.get("route")),
+                "count_7d": counts_7d.get(cid, 0),
             })
 
     # ── Traffic detectors with latest intensity ───────────────────────────────
@@ -74,16 +85,17 @@ def get_map_data():
                 speed=("speed", "mean"),
             ).reset_index()
             latest_intensity = agg.set_index("detector_id")["intensity"].astype(int).to_dict()
-            latest_speed = agg.set_index("detector_id")["speed"].round(1).to_dict()
+            raw_speed = agg.set_index("detector_id")["speed"].round(1)
+            latest_speed = {k: (None if pd.isna(v) else float(v)) for k, v in raw_speed.items()}
 
         for _, row in td_df.iterrows():
-            det_id = str(row.get("id", ""))
+            det_id = _s(row.get("id"))
             result["traffic_detectors"].append({
                 "id": det_id,
-                "name": row.get("name", ""),
+                "name": _s(row.get("name")),
                 "lat": float(row["latitude"]),
                 "lon": float(row["longitude"]),
-                "road": row.get("road", ""),
+                "road": _s(row.get("road")),
                 "intensity": latest_intensity.get(det_id, 0),
                 "avg_speed": latest_speed.get(det_id, None),
             })
@@ -101,13 +113,13 @@ def get_map_data():
         for _, row in aq_df.iterrows():
             aq_idx = row.get("aq_index")
             result["air_quality"].append({
-                "id": row.get("id", ""),
-                "name": row.get("name", ""),
+                "id": _s(row.get("id")),
+                "name": _s(row.get("name")),
                 "lat": float(row["latitude"]),
                 "lon": float(row["longitude"]),
-                "district": row.get("district", ""),
+                "district": _s(row.get("district")),
                 "aq_index": int(aq_idx) if pd.notna(aq_idx) else None,
-                "updated_at": row.get("updated_at", ""),
+                "updated_at": _s(row.get("updated_at")),
             })
 
     return result
