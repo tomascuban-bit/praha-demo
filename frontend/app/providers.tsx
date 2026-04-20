@@ -1,7 +1,6 @@
 'use client'
 
 import { isServer, QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { KaiChatProvider } from '@/lib/kai-context'
 
 function makeQueryClient() {
   return new QueryClient({
@@ -23,7 +22,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient()
   return (
     <QueryClientProvider client={queryClient}>
-      <KaiChatProvider>{children}</KaiChatProvider>
+      {children}
     </QueryClientProvider>
   )
 }

@@ -1,13 +1,11 @@
 'use client'
 
 import { useCurrentUser, usePlatformInfo } from '@/lib/api'
-import { useKaiChat } from '@/lib/kai-context'
-import { MessageSquare, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 
 export default function Header() {
   const { data: user } = useCurrentUser()
   const { data: platform } = usePlatformInfo()
-  const { openChat, isOpen } = useKaiChat()
 
   const projectUrl = platform?.connection_url && platform?.project_id
     ? `${platform.connection_url}/admin/projects/${platform.project_id}`
@@ -43,18 +41,6 @@ export default function Header() {
               <span className="hidden sm:inline">Keboola projekt</span>
             </a>
           )}
-
-          <button
-            onClick={openChat}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all
-              ${isOpen
-                ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
-                : 'border-border text-gray-500 hover:border-brand-primary hover:text-brand-primary'
-              }`}
-          >
-            <MessageSquare size={15} />
-            <span>Zeptat se KAI</span>
-          </button>
 
           {user?.email && (
             <div className="w-7 h-7 rounded-full bg-brand-secondary/10 flex items-center justify-center">
