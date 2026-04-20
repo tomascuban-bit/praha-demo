@@ -183,9 +183,12 @@ export function useQueryData(params: {
   days?: number
   filterCol?: string
   filterVal?: string
+  granularity?: string
+  topN?: number
+  sortDir?: string
 } | null) {
   return useQuery<QueryDataResponse | null>({
-    queryKey: ['query-data', params?.source, params?.dimension, params?.measures, params?.days, params?.filterCol, params?.filterVal],
+    queryKey: ['query-data', params?.source, params?.dimension, params?.measures, params?.days, params?.filterCol, params?.filterVal, params?.granularity, params?.topN, params?.sortDir],
     queryFn: () => {
       if (!params) return null
       const qs = new URLSearchParams({
@@ -198,6 +201,9 @@ export function useQueryData(params: {
         qs.set('filter_col', params.filterCol)
         qs.set('filter_val', params.filterVal)
       }
+      if (params.granularity) qs.set('granularity', params.granularity)
+      if (params.topN) qs.set('top_n', String(params.topN))
+      if (params.sortDir) qs.set('sort_dir', params.sortDir)
       return apiFetch<QueryDataResponse>(`/api/query-data?${qs}`)
     },
     enabled: !!params && !!params.dimension && params.measures.length > 0,

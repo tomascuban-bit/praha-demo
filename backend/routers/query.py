@@ -183,6 +183,9 @@ def query_data(
     days: int | None = Query(None),
     filter_col: str | None = Query(None),
     filter_val: str | None = Query(None),
+    granularity: str = Query("day"),
+    top_n: int | None = Query(None),
+    sort_dir: str = Query("desc"),
 ):
     if source not in SCHEMA:
         raise HTTPException(status_code=422, detail=f"Neplatný zdroj: {source}")
@@ -210,6 +213,8 @@ def query_data(
             df[m] = pd.to_numeric(df[m], errors="coerce").fillna(0)
 
     dim_col = dimension
+    date_col = schema.get("date_col")
+    is_date_dim = date_col and dimension == date_col
 
     if source == "bicycle_measurements" and dimension == "counter_id":
         counters = _DATA.get("bicycle_counters")
@@ -222,12 +227,24 @@ def query_data(
             lambda x: PARKING_LOCATIONS.get(x, {}).get("name", x)
         )
 
-    date_col = schema.get("date_col")
-    if date_col and dimension == date_col and pd.api.types.is_datetime64_any_dtype(df[dim_col]):
-        df[dim_col] = df[dim_col].dt.to_period("D").astype(str)
+    if is_date_dim and pd.api.types.is_datetime64_any_dtype(df[dim_col]):
+        if granularity == "hour":
+            df[dim_col] = df[dim_col].dt.strftime("%Y-%m-%d %H:00")
+        elif granularity == "week":
+            df[dim_col] = df[dim_col].dt.to_period("W").astype(str)
+        elif granularity == "month":
+            df[dim_col] = df[dim_col].dt.to_period("M").astype(str)
+        else:
+            df[dim_col] = df[dim_col].dt.to_period("D").astype(str)
 
     agg_dict = {m: schema["measures"][m] for m in measure_list}
     grouped = df.groupby(dim_col, sort=True).agg(agg_dict).reset_index()
+
+    if not is_date_dim and measure_list:
+        grouped = grouped.sort_values(measure_list[0], ascending=(sort_dir == "asc"))
+
+    if top_n and top_n > 0:
+        grouped = grouped.head(top_n)
 
     friendly_headers = [LABEL_MAP.get(dimension, dimension)] + [LABEL_MAP.get(m, m) for m in measure_list]
     rows = [

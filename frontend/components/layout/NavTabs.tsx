@@ -9,7 +9,7 @@ const TABS = [
   { href: '/cycling',  label: 'Cyklistika',  icon: Bike },
   { href: '/parking',  label: 'Parkování',   icon: ParkingCircle },
   { href: '/map',      label: 'Mapa města',  icon: Map },
-  { href: '/custom',   label: 'Sestavy',     icon: BarChart2 },
+  { href: '/custom',   label: 'Reporty',     icon: BarChart2 },
 ]
 
 export default function NavTabs() {
