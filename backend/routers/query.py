@@ -1,6 +1,5 @@
 """
-Sestavy — /api/data-schema a /api/query-data.
-Umožňuje uživatelům sestavovat vlastní grafy z dat pražské mobility.
+Sestavy — /api/data-schema, /api/query-data, /api/dimension-values.
 """
 from __future__ import annotations
 
@@ -8,50 +7,134 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 
 from services.data_loader import _DATA
+from .parking import PARKING_LOCATIONS
 
 router = APIRouter()
 
-SCHEMA = {
+SCHEMA: dict[str, dict] = {
     "bicycle_measurements": {
         "date_col": "measured_from",
         "dimensions": {"measured_from", "counter_id"},
-        "measures": {"total_count": "sum", "direction_a": "sum", "direction_b": "sum"},
+        "measures": {
+            "total_count": "sum",
+            "direction_a": "sum",
+            "direction_b": "sum",
+        },
+        "supports_period": True,
+        "filterable": {"measured_from": "counter_id"},
+    },
+    "parking_occupancy": {
+        "date_col": None,
+        "dimensions": {"parking_id"},
+        "measures": {
+            "total_spots": "sum",
+            "free_spots": "sum",
+            "occupied_spots": "sum",
+            "pct_full": "mean",
+        },
         "supports_period": False,
+        "filterable": {},
     },
 }
 
 LABEL_MAP: dict[str, str] = {
-    "measured_from": "Datum/hodina",
-    "counter_id":    "ID počítadla",
-    "total_count":   "Celkem cyklistů",
-    "direction_a":   "Směr A",
-    "direction_b":   "Směr B",
+    "measured_from":  "Datum/hodina",
+    "counter_id":     "Počítadlo",
+    "total_count":    "Celkem cyklistů",
+    "direction_a":    "Směr A",
+    "direction_b":    "Směr B",
+    "parking_id":     "Parkoviště",
+    "total_spots":    "Celková kapacita",
+    "free_spots":     "Volná místa",
+    "occupied_spots": "Obsazená místa",
+    "pct_full":       "Obsazenost (%)",
 }
-
-
-def _fmt_number(val: object) -> str:
-    if isinstance(val, float):
-        return str(int(val)) if val == int(val) else f"{val:_.1f}".replace("_", "\u00a0")
-    return str(val)
 
 DATA_SCHEMA_RESPONSE = {
     "sources": [
         {
             "id": "bicycle_measurements",
             "label": "Cyklistická počítadla",
+            "supports_period": True,
             "dimensions": [
-                {"column": "measured_from", "label": "Datum/hodina", "is_date": True},
-                {"column": "counter_id", "label": "ID počítadla", "is_date": False},
+                {
+                    "column": "measured_from",
+                    "label": "Datum/hodina",
+                    "is_date": True,
+                    "filterable_by": {"column": "counter_id", "label": "Počítadlo"},
+                },
+                {
+                    "column": "counter_id",
+                    "label": "Počítadlo",
+                    "is_date": False,
+                    "filterable_by": None,
+                },
             ],
             "measures": [
                 {"column": "total_count", "label": "Celkem cyklistů"},
                 {"column": "direction_a", "label": "Směr A"},
                 {"column": "direction_b", "label": "Směr B"},
             ],
+        },
+        {
+            "id": "parking_occupancy",
+            "label": "P+R Parkoviště",
             "supports_period": False,
+            "dimensions": [
+                {
+                    "column": "parking_id",
+                    "label": "Parkoviště",
+                    "is_date": False,
+                    "filterable_by": None,
+                },
+            ],
+            "measures": [
+                {"column": "total_spots",    "label": "Celková kapacita"},
+                {"column": "free_spots",     "label": "Volná místa"},
+                {"column": "occupied_spots", "label": "Obsazená místa"},
+                {"column": "pct_full",       "label": "Obsazenost (%)"},
+            ],
         },
     ]
 }
+
+
+def _fmt_number(val: object) -> str:
+    if isinstance(val, float):
+        return str(int(val)) if val == int(val) else f"{val:.1f}"
+    return str(val)
+
+
+def _prepare_df(
+    source: str,
+    df: pd.DataFrame,
+    days: int | None,
+    filter_col: str | None,
+    filter_val: str | None,
+) -> pd.DataFrame:
+    df = df.copy()
+
+    if source == "parking_occupancy":
+        if "source" in df.columns:
+            df = df[df["source"] == "tsk-offstreet"]
+        for col in ["total_spots", "free_spots", "occupied_spots"]:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+        df = df[df["total_spots"] > 0]
+        df["pct_full"] = (df["occupied_spots"] / df["total_spots"] * 100).round(1)
+
+    date_col = SCHEMA[source].get("date_col")
+    if date_col and date_col in df.columns:
+        df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+        if days:
+            max_date = df[date_col].max()
+            if pd.notna(max_date):
+                cutoff = max_date - pd.Timedelta(days=days)
+                df = df[df[date_col] >= cutoff]
+
+    if filter_col and filter_val and filter_col in df.columns:
+        df = df[df[filter_col].astype(str) == filter_val]
+
+    return df
 
 
 @router.get("/api/data-schema")
@@ -59,11 +142,47 @@ def get_data_schema():
     return DATA_SCHEMA_RESPONSE
 
 
+@router.get("/api/dimension-values")
+def dimension_values(source: str = Query(...), column: str = Query(...)):
+    if source not in SCHEMA:
+        raise HTTPException(status_code=422, detail=f"Neplatný zdroj: {source}")
+    if column not in SCHEMA[source]["dimensions"]:
+        raise HTTPException(status_code=422, detail=f"Neplatná dimenze: {column}")
+
+    df = _DATA.get(source)
+    if df is None or df.empty:
+        return []
+
+    if source == "bicycle_measurements" and column == "counter_id":
+        counters = _DATA.get("bicycle_counters")
+        measurement_ids = sorted(df["counter_id"].dropna().astype(str).unique())
+        if counters is not None and not counters.empty:
+            name_map = dict(zip(counters["id"].astype(str), counters["name"].astype(str)))
+            return [{"value": cid, "label": name_map.get(cid, cid)} for cid in measurement_ids]
+        return [{"value": cid, "label": cid} for cid in measurement_ids]
+
+    if source == "parking_occupancy" and column == "parking_id":
+        pk = df.copy()
+        if "source" in pk.columns:
+            pk = pk[pk["source"] == "tsk-offstreet"]
+        unique_ids = sorted(pk["parking_id"].dropna().astype(str).unique())
+        return [
+            {"value": pid, "label": PARKING_LOCATIONS.get(pid, {}).get("name", pid)}
+            for pid in unique_ids
+        ]
+
+    unique = sorted(df[column].dropna().astype(str).unique())
+    return [{"value": v, "label": v} for v in unique]
+
+
 @router.get("/api/query-data")
 def query_data(
     source: str = Query(...),
     dimension: str = Query(...),
     measures: str = Query(...),
+    days: int | None = Query(None),
+    filter_col: str | None = Query(None),
+    filter_val: str | None = Query(None),
 ):
     if source not in SCHEMA:
         raise HTTPException(status_code=422, detail=f"Neplatný zdroj: {source}")
@@ -77,24 +196,42 @@ def query_data(
     if invalid:
         raise HTTPException(status_code=422, detail=f"Neplatné ukazatele: {invalid}")
 
-    df = _DATA.get(source)
-    if df is None or df.empty:
-        return {"headers": [dimension] + measure_list, "rows": []}
+    raw_df = _DATA.get(source)
+    empty_headers = [LABEL_MAP.get(dimension, dimension)] + [LABEL_MAP.get(m, m) for m in measure_list]
+    if raw_df is None or raw_df.empty:
+        return {"headers": empty_headers, "rows": []}
 
-    date_col = schema["date_col"]
-    df = df.copy()
-    if dimension == date_col:
-        df[dimension] = pd.to_datetime(df[dimension], errors="coerce").dt.to_period("D").astype(str)
+    df = _prepare_df(source, raw_df, days, filter_col, filter_val)
+    if df.empty:
+        return {"headers": empty_headers, "rows": []}
 
     for m in measure_list:
-        df[m] = pd.to_numeric(df[m], errors="coerce").fillna(0)
+        if m in df.columns and m != "pct_full":
+            df[m] = pd.to_numeric(df[m], errors="coerce").fillna(0)
+
+    dim_col = dimension
+
+    if source == "bicycle_measurements" and dimension == "counter_id":
+        counters = _DATA.get("bicycle_counters")
+        if counters is not None and not counters.empty:
+            name_map = dict(zip(counters["id"].astype(str), counters["name"].astype(str)))
+            df[dim_col] = df[dim_col].astype(str).map(lambda x: name_map.get(x, x))
+
+    if source == "parking_occupancy" and dimension == "parking_id":
+        df[dim_col] = df[dim_col].astype(str).map(
+            lambda x: PARKING_LOCATIONS.get(x, {}).get("name", x)
+        )
+
+    date_col = schema.get("date_col")
+    if date_col and dimension == date_col and pd.api.types.is_datetime64_any_dtype(df[dim_col]):
+        df[dim_col] = df[dim_col].dt.to_period("D").astype(str)
 
     agg_dict = {m: schema["measures"][m] for m in measure_list}
-    grouped = df.groupby(dimension, sort=True).agg(agg_dict).reset_index()
+    grouped = df.groupby(dim_col, sort=True).agg(agg_dict).reset_index()
 
     friendly_headers = [LABEL_MAP.get(dimension, dimension)] + [LABEL_MAP.get(m, m) for m in measure_list]
     rows = [
-        [str(r[dimension])] + [_fmt_number(r[m]) for m in measure_list]
+        [str(r[dim_col])] + [_fmt_number(r[m]) for m in measure_list]
         for _, r in grouped.iterrows()
     ]
     return {"headers": friendly_headers, "rows": rows}

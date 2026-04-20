@@ -148,16 +148,28 @@ export interface ParkingResponse {
 }
 
 // Report builder
+export interface DataSchemaDimension {
+  column: string
+  label: string
+  is_date?: boolean
+  filterable_by?: { column: string; label: string } | null
+}
+
 export interface DataSchemaSource {
   id: string
   label: string
   supports_period: boolean
-  dimensions: Array<{ column: string; label: string; is_date?: boolean }>
+  dimensions: DataSchemaDimension[]
   measures: Array<{ column: string; label: string }>
 }
 
 export interface DataSchemaResponse {
   sources: DataSchemaSource[]
+}
+
+export interface DimensionValue {
+  value: string
+  label: string
 }
 
 export interface QueryDataResponse {

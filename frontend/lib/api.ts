@@ -12,6 +12,7 @@ import type {
   CyclingByCounter,
   HourlyPoint,
   DataSchemaResponse,
+  DimensionValue,
   QueryDataResponse,
   MapDataResponse,
   ParkingResponse,
@@ -175,9 +176,16 @@ export function useDataSchema() {
   })
 }
 
-export function useQueryData(params: { source: string; dimension: string; measures: string[] } | null) {
+export function useQueryData(params: {
+  source: string
+  dimension: string
+  measures: string[]
+  days?: number
+  filterCol?: string
+  filterVal?: string
+} | null) {
   return useQuery<QueryDataResponse | null>({
-    queryKey: ['query-data', params?.source, params?.dimension, params?.measures],
+    queryKey: ['query-data', params?.source, params?.dimension, params?.measures, params?.days, params?.filterCol, params?.filterVal],
     queryFn: () => {
       if (!params) return null
       const qs = new URLSearchParams({
@@ -185,9 +193,23 @@ export function useQueryData(params: { source: string; dimension: string; measur
         dimension: params.dimension,
         measures: params.measures.join(','),
       })
+      if (params.days) qs.set('days', String(params.days))
+      if (params.filterCol && params.filterVal) {
+        qs.set('filter_col', params.filterCol)
+        qs.set('filter_val', params.filterVal)
+      }
       return apiFetch<QueryDataResponse>(`/api/query-data?${qs}`)
     },
     enabled: !!params && !!params.dimension && params.measures.length > 0,
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useDimensionValues(source: string | null, column: string | null) {
+  return useQuery<DimensionValue[]>({
+    queryKey: ['dimension-values', source, column],
+    queryFn: () => apiFetch<DimensionValue[]>(`/api/dimension-values?source=${source}&column=${column}`),
+    enabled: !!source && !!column,
+    staleTime: 10 * 60 * 1000,
   })
 }
