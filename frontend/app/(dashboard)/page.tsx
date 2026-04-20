@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { Bike, Radio, TrendingUp, Activity, PersonStanding, ParkingCircle } from 'lucide-react'
-import { useKpis, useOverviewChart } from '@/lib/api'
+import { useKpis, useOverviewChart, useParkingLots } from '@/lib/api'
 import { formatCount, formatSpeed, pluralize, COLORS } from '@/lib/constants'
 import type { KpiItem } from '@/lib/types'
 
@@ -50,11 +50,65 @@ function KpiCard({ item }: { item: KpiItem }) {
 
 const DAY_OPTIONS = [7, 14, 30, 90]
 
+function parkingColor(pct: number): string {
+  if (pct < 25) return '#2DC653'
+  if (pct < 50) return '#74c69d'
+  if (pct < 75) return '#f59e0b'
+  if (pct < 90) return '#f97316'
+  return '#ef4444'
+}
+
 export default function OverviewPage() {
   const [days, setDays] = useState(30)
   const { data: kpis, isLoading: kpisLoading } = useKpis()
   const { data: chart, isLoading: chartLoading } = useOverviewChart(days)
+  const { data: parkingLots, isLoading: parkingLoading } = useParkingLots()
   const availableDays = chart && chart.length > 0 ? chart.length : null
+
+  const sortedLots = parkingLots ? [...parkingLots].sort((a, b) => a.pct_full - b.pct_full) : []
+  const parkingLastUpdated = parkingLots?.length
+    ? (() => {
+        const ts = parkingLots.map(l => l.last_updated).filter(Boolean).sort().at(-1)
+        if (!ts) return null
+        try {
+          return new Date(ts).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Prague' })
+        } catch { return null }
+      })()
+    : null
+
+  const parkingChartOption = {
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#fff',
+      borderColor: COLORS.border,
+      formatter: (params: { dataIndex: number }[]) => {
+        const lot = sortedLots[params[0].dataIndex]
+        return `<span style="font-weight:600">${lot.name}</span><br/>Obsazeno: <b>${lot.pct_full} %</b><br/>Volná místa: <b>${lot.free_spots}</b> z <b>${lot.total_spots}</b>`
+      },
+    },
+    grid: { left: 8, right: 16, bottom: 8, top: 8, containLabel: true },
+    xAxis: {
+      type: 'value',
+      max: 100,
+      axisLabel: { formatter: '{value} %', fontSize: 11, color: '#94a3b8' },
+      splitLine: { lineStyle: { color: COLORS.border } },
+    },
+    yAxis: {
+      type: 'category',
+      data: sortedLots.map(l => l.name),
+      axisLabel: { fontSize: 11, color: '#64748b', width: 160, overflow: 'truncate' },
+      axisLine: { show: false },
+      axisTick: { show: false },
+    },
+    series: [{
+      type: 'bar',
+      barMaxWidth: 18,
+      data: sortedLots.map(lot => ({
+        value: lot.pct_full,
+        itemStyle: { color: parkingColor(lot.pct_full), borderRadius: [0, 3, 3, 0] },
+      })),
+    }],
+  }
 
   const chartOption = {
     tooltip: {
@@ -155,6 +209,27 @@ export default function OverviewPage() {
           <div className="h-72 animate-pulse bg-surface rounded-xl" />
         ) : (
           <ReactECharts option={chartOption} style={{ height: 288 }} />
+        )}
+      </div>
+
+      {/* Parking chart */}
+      <div className="bg-white rounded-2xl border border-border p-6">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 className="text-base font-semibold text-brand-secondary">Obsazenost P+R parkovišť</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Aktuální stav 17 parkovišť TSK Praha — procento obsazených míst</p>
+          </div>
+          {parkingLastUpdated && (
+            <span className="text-xs text-gray-400 shrink-0 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+              Aktualizováno {parkingLastUpdated}
+            </span>
+          )}
+        </div>
+        {parkingLoading ? (
+          <div className="h-96 animate-pulse bg-surface rounded-xl" />
+        ) : (
+          <ReactECharts option={parkingChartOption} style={{ height: 420 }} />
         )}
       </div>
 
