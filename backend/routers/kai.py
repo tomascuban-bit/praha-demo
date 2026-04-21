@@ -120,9 +120,9 @@ async def kai_debug():
             "selectedVisibilityType": "private",
         }
         async with httpx.AsyncClient(timeout=15) as client:
-            # Validate token against Storage API first
-            sv = await client.get(
-                f"{_storage_base()}/v2/storage",
+            # Validate token via /v2/storage/tokens/verify
+            sv = await client.post(
+                f"{_storage_base()}/v2/storage/tokens/verify",
                 headers={"x-storageapi-token": _token()},
             )
             sv_body = (await sv.aread()).decode(errors="replace")
