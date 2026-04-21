@@ -63,13 +63,19 @@ async def _proxy_sse(payload: dict) -> StreamingResponse:
                 f"{kai_url}/api/chat",
                 headers={
                     "Content-Type": "application/json",
-                    "Authorization": f"Bearer {token}",
                     "x-storageapi-token": token,
                     "x-storageapi-url": storage_base,
                 },
                 json=payload,
             ) as r:
-                logger.info("KAI upstream status: %d", r.status_code)
+                content_type = r.headers.get("content-type", "")
+                logger.info("KAI upstream status=%d ct=%s url=%s", r.status_code, content_type, kai_url)
+                if r.status_code >= 400 or "event-stream" not in content_type:
+                    body = await r.aread()
+                    msg = body.decode(errors="replace")[:200]
+                    logger.warning("KAI non-SSE response: status=%d body=%r", r.status_code, msg)
+                    yield f'data: {{"type":"error","message":"KAI ({r.status_code}): {msg}"}}\n\n'.encode()
+                    return
                 async for chunk in r.aiter_bytes():
                     yield chunk
 
