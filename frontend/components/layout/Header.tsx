@@ -16,11 +16,14 @@ export default function Header() {
       <div className="max-w-screen-2xl mx-auto px-6 h-14 flex items-center justify-between">
         {/* Logo + title */}
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-md bg-brand-primary flex items-center justify-center">
-            <span className="text-white text-xs font-bold">P</span>
-          </div>
+          <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+            <rect width="28" height="28" rx="6" fill="#1F8FFF"/>
+            <rect x="6" y="7" width="5" height="14" fill="white" rx="0.5"/>
+            <path d="M12 7 L22 7 L15.5 14 L12 14Z" fill="white"/>
+            <path d="M12 14 L15.5 14 L22 21 L12 21Z" fill="white"/>
+          </svg>
           <div>
-            <span className="font-semibold text-brand-secondary text-sm">Praha Demo</span>
+            <span className="font-semibold text-brand-secondary text-sm">Keboola Demo App</span>
             <span className="ml-2 text-xs text-gray-400 hidden sm:inline">Přehled mobility Prahy</span>
           </div>
           <span className="ml-2 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-medium uppercase tracking-wide">
