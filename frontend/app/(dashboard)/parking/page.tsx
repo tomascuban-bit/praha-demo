@@ -8,7 +8,8 @@ import {
   useParkingLots,
   useParkingDistribution,
 } from '@/lib/api'
-import { COLORS } from '@/lib/constants'
+import { chartDefaults, COLORS } from '@/lib/constants'
+import { useTheme } from '@/lib/theme'
 
 type ChartView = 'pct' | 'abs'
 
@@ -31,18 +32,20 @@ function fillColor(pct: number): string {
 function OccupancyBar({ pct }: { pct: number }) {
   return (
     <div className="flex items-center gap-2 min-w-[120px]">
-      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: fillColor(pct) }}
         />
       </div>
-      <span className="text-xs tabular-nums text-gray-500 w-10 text-right">{pct.toFixed(0)}%</span>
+      <span className="text-xs tabular-nums text-gray-500 dark:text-slate-400 w-10 text-right">{pct.toFixed(0)}%</span>
     </div>
   )
 }
 
 export default function ParkingPage() {
+  const { theme } = useTheme()
+  const ct = chartDefaults(theme === 'dark')
   const { data: summary, isLoading: summaryLoading } = useParkingSummary()
   const { data: lots } = useParkingLots()
   const { data: distribution } = useParkingDistribution()
@@ -60,19 +63,19 @@ export default function ParkingPage() {
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
-      backgroundColor: '#fff',
-      borderColor: COLORS.border,
-      textStyle: { color: COLORS.brandSecondary, fontSize: 12 },
+      backgroundColor: ct.tooltipBg,
+      borderColor: ct.tooltipBorder,
+      textStyle: { color: ct.tooltipText, fontSize: 12 },
       formatter: (params: { dataIndex: number }[]) => {
         const lot = displayLots[params[0]?.dataIndex]
         if (!lot) return ''
         return `<b>${lot.name || lot.parking_id}</b><br/>Obsazeno: ${lot.pct_full.toFixed(0)} % (${lot.occupied_spots}/${lot.total_spots} míst)`
       },
     },
-    legend: { data: ['Obsazená', 'Volná'], top: 0, textStyle: { color: '#64748b', fontSize: 11 } },
+    legend: { data: ['Obsazená', 'Volná'], top: 0, textStyle: { color: ct.dimLabel, fontSize: 11 } },
     grid: { left: 16, right: 100, bottom: 0, top: 28, containLabel: true },
-    xAxis: { type: 'value', max: 100, axisLabel: { fontSize: 10, color: '#94a3b8', formatter: '{value} %' } },
-    yAxis: { type: 'category', inverse: true, data: lotNames, axisLabel: { fontSize: 11, color: '#475569' } },
+    xAxis: { type: 'value', max: 100, axisLabel: { fontSize: 10, color: ct.axisLabel, formatter: '{value} %' } },
+    yAxis: { type: 'category', inverse: true, data: lotNames, axisLabel: { fontSize: 11, color: ct.dimLabel } },
     series: [
       {
         name: 'Obsazená',
@@ -108,14 +111,14 @@ export default function ParkingPage() {
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
-      backgroundColor: '#fff',
-      borderColor: COLORS.border,
-      textStyle: { color: COLORS.brandSecondary, fontSize: 12 },
+      backgroundColor: ct.tooltipBg,
+      borderColor: ct.tooltipBorder,
+      textStyle: { color: ct.tooltipText, fontSize: 12 },
     },
-    legend: { data: ['Obsazená', 'Volná'], top: 0, textStyle: { color: '#64748b', fontSize: 11 } },
+    legend: { data: ['Obsazená', 'Volná'], top: 0, textStyle: { color: ct.dimLabel, fontSize: 11 } },
     grid: { left: 16, right: 16, bottom: 0, top: 28, containLabel: true },
-    xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#94a3b8' } },
-    yAxis: { type: 'category', inverse: true, data: lotNames, axisLabel: { fontSize: 11, color: '#475569' } },
+    xAxis: { type: 'value', axisLabel: { fontSize: 10, color: ct.axisLabel } },
+    yAxis: { type: 'category', inverse: true, data: lotNames, axisLabel: { fontSize: 11, color: ct.dimLabel } },
     series: [
       {
         name: 'Obsazená',
@@ -142,16 +145,16 @@ export default function ParkingPage() {
   const distributionChart = {
     tooltip: {
       trigger: 'item',
-      backgroundColor: '#fff',
-      borderColor: COLORS.border,
-      textStyle: { color: COLORS.brandSecondary, fontSize: 12 },
+      backgroundColor: ct.tooltipBg,
+      borderColor: ct.tooltipBorder,
+      textStyle: { color: ct.tooltipText, fontSize: 12 },
       formatter: '{b}: {c} parkovišť ({d}%)',
     },
     legend: {
       orient: 'vertical',
       right: 8,
       top: 'center',
-      textStyle: { color: '#64748b', fontSize: 11 },
+      textStyle: { color: ct.dimLabel, fontSize: 11 },
       formatter: (name: string) => {
         const item = (distribution ?? []).find(d => d.bucket === name)
         return item ? `${name}  (${item.lot_count})` : name
@@ -244,13 +247,13 @@ export default function ParkingPage() {
       {summaryLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-border p-5 h-28 animate-pulse" />
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-border p-5 h-28 animate-pulse" />
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {kpis.map(k => (
-            <div key={k.label} className="bg-white rounded-2xl border border-border p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
+            <div key={k.label} className="bg-white dark:bg-slate-800 rounded-2xl border border-border p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
               <div className={`w-9 h-9 rounded-xl ${k.bg} ${k.color} flex items-center justify-center`}>
                 {k.icon}
               </div>
@@ -267,7 +270,7 @@ export default function ParkingPage() {
       {/* Charts row */}
       <div className="grid lg:grid-cols-5 gap-6">
         {/* Per-lot stacked bar — wider */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-border p-6">
+        <div className="lg:col-span-3 bg-white dark:bg-slate-800 rounded-2xl border border-border p-6">
           <div className="flex items-start justify-between mb-3">
             <div>
               <h2 className="text-sm font-semibold text-brand-secondary">Obsazenost podle parkoviště</h2>
@@ -303,7 +306,7 @@ export default function ParkingPage() {
         </div>
 
         {/* Donut — narrower */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-border p-6">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-border p-6">
           <h2 className="text-sm font-semibold text-brand-secondary mb-1">Parkoviště dle obsazenosti</h2>
           <p className="text-xs text-gray-400 mb-4">Jak jsou jednotlivá parkoviště obsazená právě teď?</p>
           {distribution ? (
@@ -315,7 +318,7 @@ export default function ParkingPage() {
       </div>
 
       {/* Lots table */}
-      <div className="bg-white rounded-2xl border border-border">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold text-brand-secondary">Všechna parkoviště — dle obsazenosti</h2>
@@ -336,12 +339,12 @@ export default function ParkingPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Název / ID</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Provozovatel</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Kapacita</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Volná</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Obsazenost</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Aktualizace</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Název / ID</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Provozovatel</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Kapacita</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Volná</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Obsazenost</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Aktualizace</th>
                 </tr>
               </thead>
               <tbody>
@@ -362,7 +365,7 @@ export default function ParkingPage() {
                         {lot.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-gray-600">{lot.total_spots}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-gray-600 dark:text-slate-300">{lot.total_spots}</td>
                     <td className="px-4 py-3 text-right tabular-nums font-medium" style={{ color: fillColor(lot.pct_full) }}>
                       {lot.free_spots}
                     </td>

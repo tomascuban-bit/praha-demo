@@ -10,7 +10,8 @@ import {
   usePedestrianHourly,
   usePedestrianComparison,
 } from '@/lib/api'
-import { formatCount, pluralize, COLORS } from '@/lib/constants'
+import { formatCount, pluralize, chartDefaults, COLORS } from '@/lib/constants'
+import { useTheme } from '@/lib/theme'
 
 const DAY_OPTIONS = [7, 14, 30, 90]
 const PED_COLOR = '#6366f1'
@@ -23,11 +24,13 @@ export default function PedestrianPage() {
   const { data: hourly } = usePedestrianHourly(days)
   const { data: comparison } = usePedestrianComparison(days)
 
+  const { theme } = useTheme()
+  const ct = chartDefaults(theme === 'dark')
   const availableDays = trend && trend.length > 0 ? trend.length : null
   const dataLimited = availableDays !== null && availableDays < days
 
   const trendOption = {
-    tooltip: { trigger: 'axis', backgroundColor: '#fff', borderColor: COLORS.border, textStyle: { color: COLORS.brandSecondary, fontSize: 12 } },
+    tooltip: { trigger: 'axis', backgroundColor: ct.tooltipBg, borderColor: ct.tooltipBorder, textStyle: { color: ct.tooltipText, fontSize: 12 } },
     grid: { left: 16, right: 16, bottom: 24, top: 16, containLabel: true },
     xAxis: {
       type: 'category',
@@ -45,12 +48,12 @@ export default function PedestrianPage() {
   }
 
   const hourlyOption = {
-    tooltip: { trigger: 'axis', backgroundColor: '#fff', borderColor: COLORS.border, textStyle: { color: COLORS.brandSecondary, fontSize: 12 } },
+    tooltip: { trigger: 'axis', backgroundColor: ct.tooltipBg, borderColor: ct.tooltipBorder, textStyle: { color: ct.tooltipText, fontSize: 12 } },
     grid: { left: 16, right: 16, bottom: 24, top: 16, containLabel: true },
     xAxis: {
       type: 'category',
       data: Array.from({ length: 24 }, (_, i) => `${i}:00`),
-      axisLabel: { fontSize: 10, color: '#94a3b8' },
+      axisLabel: { fontSize: 10, color: ct.axisLabel },
       axisLine: { lineStyle: { color: COLORS.border } },
     },
     yAxis: { type: 'value', axisLabel: { fontSize: 11, color: '#94a3b8' } },
@@ -69,8 +72,8 @@ export default function PedestrianPage() {
   }
 
   const comparisonOption = {
-    tooltip: { trigger: 'axis', backgroundColor: '#fff', borderColor: COLORS.border, textStyle: { color: COLORS.brandSecondary, fontSize: 12 } },
-    legend: { data: ['Cyklisté', 'Chodci'], bottom: 0, textStyle: { fontSize: 11, color: '#64748b' } },
+    tooltip: { trigger: 'axis', backgroundColor: ct.tooltipBg, borderColor: ct.tooltipBorder, textStyle: { color: ct.tooltipText, fontSize: 12 } },
+    legend: { data: ['Cyklisté', 'Chodci'], bottom: 0, textStyle: { fontSize: 11, color: ct.dimLabel } },
     grid: { left: 16, right: 16, bottom: 36, top: 16, containLabel: true },
     xAxis: {
       type: 'category',
@@ -114,13 +117,13 @@ export default function PedestrianPage() {
     grid: { left: 8, right: 16, bottom: 8, top: 8, containLabel: true },
     xAxis: {
       type: 'value',
-      axisLabel: { fontSize: 11, color: '#94a3b8' },
-      splitLine: { lineStyle: { color: COLORS.border } },
+      axisLabel: { fontSize: 11, color: ct.axisLabel },
+      splitLine: { lineStyle: { color: ct.splitLine } },
     },
     yAxis: {
       type: 'category',
       data: (byCounter ?? []).map(c => c.name || c.counter_id),
-      axisLabel: { fontSize: 11, color: '#64748b', width: 160, overflow: 'truncate' },
+      axisLabel: { fontSize: 11, color: ct.dimLabel, width: 160, overflow: 'truncate' },
       axisLine: { show: false },
       axisTick: { show: false },
     },
@@ -202,7 +205,7 @@ export default function PedestrianPage() {
 
       {/* Trend + Hourly charts */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-border p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border p-6">
           <h2 className="text-sm font-semibold text-brand-secondary mb-4">Denní počet chodců</h2>
           {trendLoading ? (
             <div className="h-56 animate-pulse bg-surface rounded-xl" />
@@ -210,7 +213,7 @@ export default function PedestrianPage() {
             <ReactECharts option={trendOption} style={{ height: 224 }} />
           )}
         </div>
-        <div className="bg-white rounded-2xl border border-border p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border p-6">
           <h2 className="text-sm font-semibold text-brand-secondary mb-4">Průměr podle hodiny dne</h2>
           <ReactECharts option={hourlyOption} style={{ height: 224 }} />
         </div>

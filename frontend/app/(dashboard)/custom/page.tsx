@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { BarChart2, Play, RefreshCw, Download, FileDown, Bookmark, X, Check } from 'lucide-react'
 import { useDataSchema, useQueryData, useDimensionValues } from '@/lib/api'
-import { COLORS } from '@/lib/constants'
+import { chartDefaults, COLORS } from '@/lib/constants'
+import { useTheme } from '@/lib/theme'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -72,6 +73,8 @@ export default function ReportBuilderPage() {
   const [savedReports, setSavedReports] = useState<SavedReport[]>(loadReports)
 
   const { data: result, isLoading, refetch } = useQueryData(config)
+  const { theme } = useTheme()
+  const ct = chartDefaults(theme === 'dark')
 
   const sources          = schema?.sources ?? []
   const selectedSource   = sources.find(s => s.id === pending.source)
@@ -186,22 +189,22 @@ export default function ReportBuilderPage() {
       smooth: chartType === 'line',
     }))
     return {
-      tooltip: { trigger: 'axis', backgroundColor: '#fff', borderColor: COLORS.border, textStyle: { color: COLORS.brandSecondary, fontSize: 12 } },
-      legend: { data: measureHeaders, textStyle: { color: COLORS.brandSecondary, fontSize: 11 }, top: 0 },
+      tooltip: { trigger: 'axis', backgroundColor: ct.tooltipBg, borderColor: ct.tooltipBorder, textStyle: { color: ct.tooltipText, fontSize: 12 } },
+      legend: { data: measureHeaders, textStyle: { color: ct.dimLabel, fontSize: 11 }, top: 0 },
       grid: { left: 16, right: 16, bottom: 40, top: measureHeaders.length > 1 ? 36 : 16, containLabel: true },
-      xAxis: { type: 'category', data: categories, axisLabel: { fontSize: 10, color: '#94a3b8', rotate: categories.length > 20 ? 40 : 0 }, axisLine: { lineStyle: { color: COLORS.border } } },
-      yAxis: { type: 'value', axisLabel: { fontSize: 11, color: '#94a3b8' } },
+      xAxis: { type: 'category', data: categories, axisLabel: { fontSize: 10, color: ct.axisLabel, rotate: categories.length > 20 ? 40 : 0 }, axisLine: { lineStyle: { color: ct.axisLine } } },
+      yAxis: { type: 'value', axisLabel: { fontSize: 11, color: ct.axisLabel } },
       series,
     }
   })()
 
   // ── Style helpers ──────────────────────────────────────────────────────────
 
-  const selectCls = 'w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-brand-secondary focus:outline-none focus:border-brand-primary transition-colors disabled:opacity-40'
+  const selectCls = 'w-full rounded-lg border border-border bg-surface dark:bg-slate-900 px-3 py-2 text-sm text-brand-secondary focus:outline-none focus:border-brand-primary transition-colors disabled:opacity-40'
   const labelCls  = 'block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2'
   const segBtn    = (active: boolean, extra = '') =>
     ['flex-1 py-2 text-xs font-medium transition-all border-l border-border first:border-l-0',
-     active ? 'bg-brand-primary text-white' : 'bg-surface text-gray-600 hover:bg-gray-50', extra].join(' ')
+     active ? 'bg-brand-primary text-white' : 'bg-surface dark:bg-slate-900 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800', extra].join(' ')
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -219,7 +222,7 @@ export default function ReportBuilderPage() {
 
       {/* Saved reports strip */}
       {savedReports.length > 0 && (
-        <div className="bg-white rounded-2xl border border-border px-5 py-4">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border px-5 py-4">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Uložené reporty</p>
           <div className="flex flex-wrap gap-2">
             {savedReports.map(r => (
@@ -244,7 +247,7 @@ export default function ReportBuilderPage() {
       )}
 
       {/* Builder panel */}
-      <div className="bg-white rounded-2xl border border-border p-6 space-y-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border p-6 space-y-4">
 
         {/* Row 1: Source / Dimension / Filter / Period */}
         <div className="grid md:grid-cols-4 gap-4">

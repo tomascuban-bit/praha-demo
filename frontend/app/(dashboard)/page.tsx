@@ -4,7 +4,8 @@ import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { Bike, Radio, TrendingUp, Activity, PersonStanding, ParkingCircle } from 'lucide-react'
 import { useKpis, useOverviewChart, useParkingLots } from '@/lib/api'
-import { formatCount, formatSpeed, pluralize, COLORS } from '@/lib/constants'
+import { formatCount, formatSpeed, pluralize, chartDefaults, COLORS } from '@/lib/constants'
+import { useTheme } from '@/lib/theme'
 import type { KpiItem } from '@/lib/types'
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -33,7 +34,7 @@ function KpiCard({ item }: { item: KpiItem }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-border p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
         <div className="w-9 h-9 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
           {icon}
@@ -41,8 +42,8 @@ function KpiCard({ item }: { item: KpiItem }) {
       </div>
       <div>
         <div className="text-2xl font-bold text-brand-secondary tabular-nums">{displayValue}</div>
-        <div className="text-sm font-medium text-gray-600 mt-0.5">{item.label}</div>
-        <div className="text-xs text-gray-400 mt-1 leading-relaxed">{item.description}</div>
+        <div className="text-sm font-medium text-gray-600 dark:text-slate-300 mt-0.5">{item.label}</div>
+        <div className="text-xs text-gray-400 dark:text-slate-500 mt-1 leading-relaxed">{item.description}</div>
       </div>
     </div>
   )
@@ -60,6 +61,9 @@ function parkingColor(pct: number): string {
 
 export default function OverviewPage() {
   const [days, setDays] = useState(30)
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  const ct = chartDefaults(isDark)
   const { data: kpis, isLoading: kpisLoading } = useKpis()
   const { data: chart, isLoading: chartLoading } = useOverviewChart(days)
   const { data: parkingLots, isLoading: parkingLoading } = useParkingLots()
@@ -79,8 +83,8 @@ export default function OverviewPage() {
   const parkingChartOption = {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#fff',
-      borderColor: COLORS.border,
+      backgroundColor: ct.tooltipBg,
+      borderColor: ct.tooltipBorder,
       formatter: (params: { dataIndex: number }[]) => {
         const lot = sortedLots[params[0].dataIndex]
         return `<span style="font-weight:600">${lot.name}</span><br/>Obsazeno: <b>${lot.pct_full} %</b><br/>Volná místa: <b>${lot.free_spots}</b> z <b>${lot.total_spots}</b>`
@@ -90,13 +94,13 @@ export default function OverviewPage() {
     xAxis: {
       type: 'value',
       max: 100,
-      axisLabel: { formatter: '{value} %', fontSize: 11, color: '#94a3b8' },
-      splitLine: { lineStyle: { color: COLORS.border } },
+      axisLabel: { formatter: '{value} %', fontSize: 11, color: ct.axisLabel },
+      splitLine: { lineStyle: { color: ct.splitLine } },
     },
     yAxis: {
       type: 'category',
       data: sortedLots.map(l => l.name),
-      axisLabel: { fontSize: 11, color: '#64748b', width: 160, overflow: 'truncate' },
+      axisLabel: { fontSize: 11, color: ct.dimLabel, width: 160, overflow: 'truncate' },
       axisLine: { show: false },
       axisTick: { show: false },
     },
@@ -113,20 +117,20 @@ export default function OverviewPage() {
   const chartOption = {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#fff',
-      borderColor: COLORS.border,
-      textStyle: { color: COLORS.brandSecondary, fontSize: 12 },
+      backgroundColor: ct.tooltipBg,
+      borderColor: ct.tooltipBorder,
+      textStyle: { color: ct.tooltipText, fontSize: 12 },
     },
     grid: { left: 16, right: 16, bottom: 24, top: 16, containLabel: true },
     xAxis: {
       type: 'category',
       data: chart?.map(d => d.date) ?? [],
-      axisLabel: { fontSize: 11, color: '#94a3b8', rotate: days > 30 ? 30 : 0 },
-      axisLine: { lineStyle: { color: COLORS.border } },
+      axisLabel: { fontSize: 11, color: ct.axisLabel, rotate: days > 30 ? 30 : 0 },
+      axisLine: { lineStyle: { color: ct.axisLine } },
     },
     yAxis: {
       type: 'value',
-      axisLabel: { fontSize: 11, color: '#94a3b8' },
+      axisLabel: { fontSize: 11, color: ct.axisLabel },
     },
     series: [
       {
@@ -169,7 +173,7 @@ export default function OverviewPage() {
       )}
 
       {/* Trend chart */}
-      <div className="bg-white rounded-2xl border border-border p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border p-6">
         <div className="flex items-start justify-between gap-4 mb-1">
           <div>
             <h2 className="text-base font-semibold text-brand-secondary">Denní trend cyklistů</h2>
@@ -213,7 +217,7 @@ export default function OverviewPage() {
       </div>
 
       {/* Parking chart */}
-      <div className="bg-white rounded-2xl border border-border p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border p-6">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 className="text-base font-semibold text-brand-secondary">Obsazenost P+R parkovišť</h2>

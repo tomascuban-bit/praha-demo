@@ -35,6 +35,18 @@ export function formatCompact(value: number): string {
   return `${Math.round(value)}`
 }
 
+export function chartDefaults(isDark: boolean) {
+  return {
+    tooltipBg:     isDark ? '#1e293b' : '#ffffff',
+    tooltipBorder: isDark ? '#334155' : '#e2e8f0',
+    tooltipText:   isDark ? '#e2e8f0' : '#003049',
+    axisLabel:     '#94a3b8',
+    dimLabel:      isDark ? '#94a3b8' : '#64748b',
+    splitLine:     isDark ? '#334155' : '#e2e8f0',
+    axisLine:      isDark ? '#334155' : '#e2e8f0',
+  }
+}
+
 export function pluralize(n: number, { one, few, many }: { one: string; few: string; many: string }): string {
   if (n === 1) return one
   if (n >= 2 && n <= 4) return few

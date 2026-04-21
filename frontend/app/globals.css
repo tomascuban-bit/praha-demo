@@ -1,7 +1,10 @@
 @import "tailwindcss";
 
+/* Class-based dark mode — applies dark: variants when .dark is on <html> */
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
-  /* Praha Demo brand colors — Prague red + dark navy */
+  /* Keboola Demo brand colors */
   --color-brand-primary:   #D62828;
   --color-brand-secondary: #003049;
   --color-brand-accent:    #2DC653;
@@ -15,6 +18,13 @@
   --font-mono: var(--font-mono);
 }
 
+/* Dark mode — override CSS variables; all Tailwind utilities that use them auto-adapt */
+.dark {
+  --color-brand-secondary: #e2e8f0;   /* light text on dark bg */
+  --color-surface:         #0f172a;   /* slate-900 page bg */
+  --color-border:          #334155;   /* slate-700 borders */
+}
+
 * {
   box-sizing: border-box;
 }
@@ -23,6 +33,7 @@ body {
   background-color: var(--color-surface);
   color: var(--color-brand-secondary);
   font-family: var(--font-sans), system-ui, sans-serif;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 /* Scrollbar */
@@ -30,3 +41,5 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.dark ::-webkit-scrollbar-thumb { background: #475569; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }

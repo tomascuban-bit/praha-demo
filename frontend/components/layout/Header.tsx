@@ -1,18 +1,20 @@
 'use client'
 
 import { useCurrentUser, usePlatformInfo } from '@/lib/api'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Sun, Moon } from 'lucide-react'
+import { useTheme } from '@/lib/theme'
 
 export default function Header() {
   const { data: user } = useCurrentUser()
   const { data: platform } = usePlatformInfo()
+  const { theme, toggle } = useTheme()
 
   const projectUrl = platform?.connection_url && platform?.project_id
     ? `${platform.connection_url}/admin/projects/${platform.project_id}`
     : null
 
   return (
-    <header className="bg-white border-b border-border sticky top-0 z-40">
+    <header className="bg-white dark:bg-slate-900 border-b border-border sticky top-0 z-40">
       <div className="max-w-screen-2xl mx-auto px-6 h-14 flex items-center justify-between">
         {/* Logo + title */}
         <div className="flex items-center gap-3">
@@ -41,6 +43,14 @@ export default function Header() {
               <span className="hidden sm:inline">Keboola projekt</span>
             </a>
           )}
+
+          <button
+            onClick={toggle}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 dark:text-slate-400 hover:text-brand-secondary dark:hover:text-slate-200 hover:bg-surface dark:hover:bg-slate-800 transition-colors"
+            title={theme === 'dark' ? 'Přepnout na světlý režim' : 'Přepnout na tmavý režim'}
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
 
           {user?.is_authenticated && user.email && (
             <div className="w-7 h-7 rounded-full bg-brand-secondary/10 flex items-center justify-center">

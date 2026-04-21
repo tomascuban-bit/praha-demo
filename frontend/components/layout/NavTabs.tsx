@@ -17,7 +17,7 @@ export default function NavTabs() {
   const pathname = usePathname()
 
   return (
-    <nav className="bg-white border-b border-border">
+    <nav className="bg-white dark:bg-slate-900 border-b border-border">
       <div className="max-w-screen-2xl mx-auto px-6">
         <div className="flex gap-1">
           {TABS.map(({ href, label, icon: Icon }) => {
@@ -29,7 +29,7 @@ export default function NavTabs() {
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all
                   ${active
                     ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-gray-500 hover:text-brand-secondary hover:border-gray-200'
+                    : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-brand-secondary hover:border-gray-200 dark:hover:border-slate-600'
                   }`}
               >
                 <Icon size={15} />

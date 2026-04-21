@@ -4,7 +4,8 @@ import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { Bike } from 'lucide-react'
 import { useCyclingTrend, useCyclingByCounter, useCyclingHourly, usePedestrianComparison } from '@/lib/api'
-import { formatCount, pluralize, COLORS } from '@/lib/constants'
+import { formatCount, pluralize, chartDefaults, COLORS } from '@/lib/constants'
+import { useTheme } from '@/lib/theme'
 
 const DAY_OPTIONS = [7, 14, 30, 90]
 
@@ -14,17 +15,19 @@ export default function CyclingPage() {
   const { data: byCounter, isLoading: counterLoading } = useCyclingByCounter(days)
   const { data: hourly } = useCyclingHourly(days)
   const { data: comparison } = usePedestrianComparison(days)
+  const { theme } = useTheme()
+  const ct = chartDefaults(theme === 'dark')
 
   const trendOption = {
-    tooltip: { trigger: 'axis', backgroundColor: '#fff', borderColor: COLORS.border, textStyle: { color: COLORS.brandSecondary, fontSize: 12 } },
+    tooltip: { trigger: 'axis', backgroundColor: ct.tooltipBg, borderColor: ct.tooltipBorder, textStyle: { color: ct.tooltipText, fontSize: 12 } },
     grid: { left: 16, right: 16, bottom: 24, top: 16, containLabel: true },
     xAxis: {
       type: 'category',
       data: trend?.map(d => d.date) ?? [],
-      axisLabel: { fontSize: 11, color: '#94a3b8', rotate: days > 30 ? 30 : 0 },
-      axisLine: { lineStyle: { color: COLORS.border } },
+      axisLabel: { fontSize: 11, color: ct.axisLabel, rotate: days > 30 ? 30 : 0 },
+      axisLine: { lineStyle: { color: ct.axisLine } },
     },
-    yAxis: { type: 'value', axisLabel: { fontSize: 11, color: '#94a3b8' } },
+    yAxis: { type: 'value', axisLabel: { fontSize: 11, color: ct.axisLabel } },
     series: [{
       name: 'Cyklisté',
       type: 'bar',
@@ -34,15 +37,15 @@ export default function CyclingPage() {
   }
 
   const hourlyOption = {
-    tooltip: { trigger: 'axis', backgroundColor: '#fff', borderColor: COLORS.border, textStyle: { color: COLORS.brandSecondary, fontSize: 12 } },
+    tooltip: { trigger: 'axis', backgroundColor: ct.tooltipBg, borderColor: ct.tooltipBorder, textStyle: { color: ct.tooltipText, fontSize: 12 } },
     grid: { left: 16, right: 16, bottom: 24, top: 16, containLabel: true },
     xAxis: {
       type: 'category',
       data: Array.from({ length: 24 }, (_, i) => `${i}:00`),
-      axisLabel: { fontSize: 10, color: '#94a3b8' },
-      axisLine: { lineStyle: { color: COLORS.border } },
+      axisLabel: { fontSize: 10, color: ct.axisLabel },
+      axisLine: { lineStyle: { color: ct.axisLine } },
     },
-    yAxis: { type: 'value', axisLabel: { fontSize: 11, color: '#94a3b8' } },
+    yAxis: { type: 'value', axisLabel: { fontSize: 11, color: ct.axisLabel } },
     series: [{
       name: 'Prům. cyklisté',
       type: 'line',
@@ -60,16 +63,16 @@ export default function CyclingPage() {
   const topCounters = (byCounter ?? []).slice(0, 10)
 
   const comparisonOption = {
-    tooltip: { trigger: 'axis', backgroundColor: '#fff', borderColor: COLORS.border, textStyle: { color: COLORS.brandSecondary, fontSize: 12 } },
-    legend: { data: ['Cyklisté', 'Chodci'], bottom: 0, textStyle: { fontSize: 11, color: '#64748b' } },
+    tooltip: { trigger: 'axis', backgroundColor: ct.tooltipBg, borderColor: ct.tooltipBorder, textStyle: { color: ct.tooltipText, fontSize: 12 } },
+    legend: { data: ['Cyklisté', 'Chodci'], bottom: 0, textStyle: { fontSize: 11, color: ct.dimLabel } },
     grid: { left: 16, right: 16, bottom: 36, top: 16, containLabel: true },
     xAxis: {
       type: 'category',
       data: comparison?.map(d => d.date) ?? [],
-      axisLabel: { fontSize: 10, color: '#94a3b8', rotate: days > 30 ? 30 : 0 },
-      axisLine: { lineStyle: { color: COLORS.border } },
+      axisLabel: { fontSize: 10, color: ct.axisLabel, rotate: days > 30 ? 30 : 0 },
+      axisLine: { lineStyle: { color: ct.axisLine } },
     },
-    yAxis: { type: 'value', axisLabel: { fontSize: 11, color: '#94a3b8' } },
+    yAxis: { type: 'value', axisLabel: { fontSize: 11, color: ct.axisLabel } },
     series: [
       {
         name: 'Cyklisté',
@@ -143,7 +146,7 @@ export default function CyclingPage() {
 
       {/* Charts row */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-border p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border p-6">
           <h2 className="text-sm font-semibold text-brand-secondary mb-4">Denní počet cyklistů</h2>
           {trendLoading ? (
             <div className="h-56 animate-pulse bg-surface rounded-xl" />
@@ -151,7 +154,7 @@ export default function CyclingPage() {
             <ReactECharts option={trendOption} style={{ height: 224 }} />
           )}
         </div>
-        <div className="bg-white rounded-2xl border border-border p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border p-6">
           <h2 className="text-sm font-semibold text-brand-secondary mb-4">Průměr podle hodiny dne</h2>
           <ReactECharts option={hourlyOption} style={{ height: 224 }} />
         </div>
@@ -171,7 +174,7 @@ export default function CyclingPage() {
       </div>
 
       {/* Top counters table */}
-      <div className="bg-white rounded-2xl border border-border">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border">
         <div className="px-6 py-4 border-b border-border">
           <h2 className="text-sm font-semibold text-brand-secondary">
             Nejaktivnější počítadla — posl. {dataLimited ? availableDays : days} dní
@@ -189,10 +192,10 @@ export default function CyclingPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Počítadlo</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Trasa</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Celkem cyklistů</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">#</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Počítadlo</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Trasa</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Celkem cyklistů</th>
                 </tr>
               </thead>
               <tbody>
@@ -203,7 +206,7 @@ export default function CyclingPage() {
                       <div className="font-medium text-brand-secondary">{c.name || c.counter_id}</div>
                       <div className="text-xs text-gray-400 font-mono">{c.counter_id}</div>
                     </td>
-                    <td className="px-4 py-3.5 text-gray-500 text-sm">{c.route || '—'}</td>
+                    <td className="px-4 py-3.5 text-gray-500 dark:text-slate-400 text-sm">{c.route || '—'}</td>
                     <td className="px-6 py-3.5 text-right font-semibold tabular-nums text-brand-accent">
                       {formatCount(c.total_cyclists)}
                     </td>
