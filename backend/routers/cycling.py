@@ -76,7 +76,7 @@ def get_cycling_by_counter(days: int = Query(default=30, ge=1, le=365)):
 
 
 @router.get("/api/cycling/hourly")
-def get_cycling_hourly(days: int = Query(default=7, ge=1, le=30)):
+def get_cycling_hourly(days: int = Query(default=7, ge=1, le=365)):
     """Average cyclist count by hour of day (for the past N days)."""
     bm = _DATA.get("bicycle_measurements", pd.DataFrame())
     if bm.empty or "measured_from" not in bm.columns:
