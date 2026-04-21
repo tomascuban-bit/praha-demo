@@ -74,6 +74,7 @@ export interface BicycleCounterMapPoint {
   lon: number
   route: string
   count_7d: number
+  pedestrian_7d: number
   has_pedestrian: boolean
 }
 

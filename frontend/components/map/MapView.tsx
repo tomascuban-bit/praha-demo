@@ -49,13 +49,16 @@ export default function MapView({ data }: Props) {
       const bg = c.has_pedestrian ? '#6366f1' : '#2DC653'
       const emoji = c.has_pedestrian ? '🚲🚶' : '🚲'
       const fontSize = c.has_pedestrian ? Math.round(sz * 0.35) : Math.round(sz * 0.5)
+      const chipText = c.has_pedestrian
+        ? `🚲 ${(c.count_7d / 1000).toFixed(1)}k / 🚶 ${(c.pedestrian_7d / 1000).toFixed(1)}k`
+        : '7 dní'
       return [c.id, L.divIcon({
         html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
           <div style="width:${sz}px;height:${sz}px;background:${bg};border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;line-height:1">${emoji}</div>
-          <div style="background:rgba(255,255,255,0.92);border-radius:3px;padding:1px 4px;font-size:9px;font-weight:600;color:#444;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.15)">7 dní</div>
+          <div style="background:rgba(255,255,255,0.92);border-radius:3px;padding:1px 4px;font-size:9px;font-weight:600;color:#444;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.15)">${chipText}</div>
         </div>`,
-        iconSize: [sz, sz + 16],
-        iconAnchor: [sz / 2, sz / 2],
+        iconSize: [sz + (c.has_pedestrian ? 40 : 0), sz + 16],
+        iconAnchor: [sz / 2 + (c.has_pedestrian ? 20 : 0), sz / 2],
         popupAnchor: [0, -sz / 2],
         className: '',
       })]
@@ -112,9 +115,13 @@ export default function MapView({ data }: Props) {
                   Trasa: {c.route || '—'}<br />
                   Posledních 7 dní: <strong>{c.count_7d.toLocaleString('cs-CZ')} cyklistů</strong><br />
                   {c.has_pedestrian && (
-                    <span style={{ color: '#6366f1', fontSize: 11 }}>🚶 Měří i chodce</span>
+                    <>
+                      <span style={{ color: '#6366f1', fontSize: 11 }}>
+                        🚶 Chodci (7 dní): <strong>{c.pedestrian_7d.toLocaleString('cs-CZ')}</strong>
+                      </span>
+                      <br />
+                    </>
                   )}
-                  <br />
                   <span style={{ fontSize: 11, color: '#666' }}>
                     {Math.round(c.count_7d / maxCount * 100)} % nejfrekventovanějšího počítadla
                   </span>

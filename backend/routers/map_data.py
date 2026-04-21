@@ -39,14 +39,20 @@ def get_map_data():
         bc_df = bc_df.dropna(subset=["latitude", "longitude"])
 
         counts_7d: dict[str, int] = {}
+        ped_counts_7d: dict[str, int] = {}
         if not bm.empty and "measured_from" in bm.columns:
             bm_df = bm.copy()
             bm_df["measured_from"] = pd.to_datetime(bm_df["measured_from"], errors="coerce")
             bm_df["total_count"] = pd.to_numeric(bm_df["total_count"], errors="coerce").fillna(0)
+            bm_df["total_pedestrians"] = pd.to_numeric(bm_df.get("total_pedestrians", 0), errors="coerce").fillna(0)
             if not bm_df["measured_from"].isna().all():
                 cutoff = bm_df["measured_from"].max() - pd.Timedelta(days=7)
                 recent = bm_df[bm_df["measured_from"] >= cutoff]
                 counts_7d = recent.groupby("counter_id")["total_count"].sum().astype(int).to_dict()
+                ped_counts_7d = (
+                    recent[recent["counter_id"].isin(PEDESTRIAN_COUNTER_IDS)]
+                    .groupby("counter_id")["total_pedestrians"].sum().astype(int).to_dict()
+                )
 
         for _, row in bc_df.iterrows():
             cid = _s(row.get("id"))
@@ -57,6 +63,7 @@ def get_map_data():
                 "lon": float(row["longitude"]),
                 "route": _s(row.get("route")),
                 "count_7d": counts_7d.get(cid, 0),
+                "pedestrian_7d": ped_counts_7d.get(cid, 0),
                 "has_pedestrian": cid in PEDESTRIAN_COUNTER_IDS,
             })
 
