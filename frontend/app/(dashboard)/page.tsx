@@ -278,9 +278,9 @@ export default function OverviewPage() {
         <div className="border-t border-brand-secondary/10 pt-4 flex justify-end">
           <Link
             href="/feedback"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-secondary/20 text-xs text-gray-500 hover:text-brand-secondary hover:border-brand-secondary/40 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-secondary/[0.06] border border-brand-secondary/15 text-sm font-medium text-brand-secondary hover:bg-brand-secondary/[0.10] hover:border-brand-secondary/30 transition-colors"
           >
-            <MessageSquare size={12} />
+            <MessageSquare size={14} />
             Feedback
           </Link>
         </div>
