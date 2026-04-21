@@ -14,7 +14,7 @@ export default function MapPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-112px)]">
       {/* Stats bar */}
-      <div className="flex gap-6 px-6 py-3 bg-white border-b border-border text-sm flex-shrink-0">
+      <div className="flex gap-6 px-6 py-3 bg-white dark:bg-slate-900 border-b border-border text-sm flex-shrink-0">
         <div>
           <span className="text-gray-500">Počítadla kol</span>{' '}
           <strong className="text-brand-secondary">{mapData?.bicycle_counters.length ?? '—'}</strong>
@@ -48,7 +48,7 @@ export default function MapPage() {
       </div>
 
       {/* Legend */}
-      <div className="flex gap-6 px-6 py-2 bg-white border-t border-border text-xs text-gray-500 flex-shrink-0 flex-wrap">
+      <div className="flex gap-6 px-6 py-2 bg-white dark:bg-slate-900 border-t border-border text-xs text-gray-500 dark:text-slate-400 flex-shrink-0 flex-wrap">
         <div className="flex items-center gap-1.5">
           <span className="inline-flex w-5 h-5 rounded-full bg-[#2DC653] items-center justify-center text-[10px]">🚲</span>
           Pouze cyklisté

@@ -407,7 +407,7 @@ export default function ReportBuilderPage() {
       </div>
 
       {/* Chart result */}
-      <div className="bg-white rounded-2xl border border-border">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border">
         {isLoading ? (
           <div className="p-6"><div className="h-72 animate-pulse bg-surface rounded-xl" /></div>
         ) : chartOption ? (
@@ -471,7 +471,7 @@ export default function ReportBuilderPage() {
 
       {/* Raw data table */}
       {result && result.rows.length > 0 && (
-        <div className="bg-white rounded-2xl border border-border">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-border">
           <div className="px-6 py-4 border-b border-border flex items-center justify-between">
             <h2 className="text-sm font-semibold text-brand-secondary">Surová data ({result.rows.length} řádků)</h2>
             <button onClick={handleDownloadCsv} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-brand-primary transition-colors">
@@ -480,7 +480,7 @@ export default function ReportBuilderPage() {
           </div>
           <div className="overflow-x-auto max-h-64">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-white">
+              <thead className="sticky top-0 bg-white dark:bg-slate-800">
                 <tr className="border-b border-border">
                   {result.headers.map(h => <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>)}
                 </tr>

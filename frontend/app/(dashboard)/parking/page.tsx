@@ -23,7 +23,7 @@ const FILL_COLORS: Record<string, string> = {
 
 function fillColor(pct: number): string {
   if (pct < 25) return '#2DC653'
-  if (pct < 50) return '#86efac'
+  if (pct < 50) return '#74c69d'
   if (pct < 75) return '#f59e0b'
   if (pct < 90) return '#f97316'
   return '#ef4444'

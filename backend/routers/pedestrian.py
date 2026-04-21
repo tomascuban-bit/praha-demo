@@ -86,7 +86,7 @@ def get_pedestrian_by_counter(days: int = Query(default=30, ge=1, le=365)):
 
 
 @router.get("/api/pedestrian/hourly")
-def get_pedestrian_hourly(days: int = Query(default=7, ge=1, le=30)):
+def get_pedestrian_hourly(days: int = Query(default=7, ge=1, le=365)):
     df = _ped_df(days)
     if df.empty:
         return []
