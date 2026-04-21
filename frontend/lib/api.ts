@@ -20,6 +20,11 @@ import type {
   ParkingByOperator,
   ParkingLot,
   ParkingDistributionPoint,
+  PedestrianKpis,
+  PedestrianTrendPoint,
+  PedestrianByCounter,
+  PedestrianHourlyPoint,
+  PedestrianComparisonPoint,
 } from './types'
 
 
@@ -109,6 +114,52 @@ export function useCyclingHourly(days: number) {
   return useQuery<HourlyPoint[]>({
     queryKey: ['cycling-hourly', days],
     queryFn: () => apiFetch(`/api/cycling/hourly?days=${days}`),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ─── Pedestrian ──────────────────────────────────────────────────────────────
+
+export function usePedestrianKpis() {
+  return useQuery<PedestrianKpis>({
+    queryKey: ['pedestrian-kpis'],
+    queryFn: () => apiFetch('/api/pedestrian/kpis'),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function usePedestrianTrend(days: number) {
+  return useQuery<PedestrianTrendPoint[]>({
+    queryKey: ['pedestrian-trend', days],
+    queryFn: () => apiFetch(`/api/pedestrian/trend?days=${days}`),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function usePedestrianByCounter(days: number) {
+  return useQuery<PedestrianByCounter[]>({
+    queryKey: ['pedestrian-by-counter', days],
+    queryFn: () => apiFetch(`/api/pedestrian/by-counter?days=${days}`),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function usePedestrianHourly(days: number) {
+  return useQuery<PedestrianHourlyPoint[]>({
+    queryKey: ['pedestrian-hourly', days],
+    queryFn: () => apiFetch(`/api/pedestrian/hourly?days=${days}`),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function usePedestrianComparison(days: number) {
+  return useQuery<PedestrianComparisonPoint[]>({
+    queryKey: ['pedestrian-comparison', days],
+    queryFn: () => apiFetch(`/api/pedestrian/comparison?days=${days}`),
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   })

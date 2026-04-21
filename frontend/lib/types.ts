@@ -74,6 +74,38 @@ export interface BicycleCounterMapPoint {
   lon: number
   route: string
   count_7d: number
+  has_pedestrian: boolean
+}
+
+// Pedestrian
+export interface PedestrianKpis {
+  total_7d: number
+  avg_per_day: number
+  peak_hour: number | null
+  active_counters: number
+}
+
+export interface PedestrianTrendPoint {
+  date: string
+  pedestrians: number
+}
+
+export interface PedestrianByCounter {
+  counter_id: string
+  total_pedestrians: number
+  name?: string
+  route?: string
+}
+
+export interface PedestrianHourlyPoint {
+  hour: number
+  avg_pedestrians: number
+}
+
+export interface PedestrianComparisonPoint {
+  date: string
+  cyclists: number
+  pedestrians: number
 }
 
 export interface ParkingMapPoint {

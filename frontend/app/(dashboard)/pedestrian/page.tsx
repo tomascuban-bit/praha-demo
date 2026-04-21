@@ -2,18 +2,29 @@
 
 import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
-import { Bike } from 'lucide-react'
-import { useCyclingTrend, useCyclingByCounter, useCyclingHourly, usePedestrianComparison } from '@/lib/api'
+import { Footprints } from 'lucide-react'
+import {
+  usePedestrianKpis,
+  usePedestrianTrend,
+  usePedestrianByCounter,
+  usePedestrianHourly,
+  usePedestrianComparison,
+} from '@/lib/api'
 import { formatCount, pluralize, COLORS } from '@/lib/constants'
 
 const DAY_OPTIONS = [7, 14, 30, 90]
+const PED_COLOR = '#6366f1'
 
-export default function CyclingPage() {
+export default function PedestrianPage() {
   const [days, setDays] = useState(30)
-  const { data: trend, isLoading: trendLoading } = useCyclingTrend(days)
-  const { data: byCounter, isLoading: counterLoading } = useCyclingByCounter(days)
-  const { data: hourly } = useCyclingHourly(days)
+  const { data: kpis } = usePedestrianKpis()
+  const { data: trend, isLoading: trendLoading } = usePedestrianTrend(days)
+  const { data: byCounter, isLoading: counterLoading } = usePedestrianByCounter(days)
+  const { data: hourly } = usePedestrianHourly(days)
   const { data: comparison } = usePedestrianComparison(days)
+
+  const availableDays = trend && trend.length > 0 ? trend.length : null
+  const dataLimited = availableDays !== null && availableDays < days
 
   const trendOption = {
     tooltip: { trigger: 'axis', backgroundColor: '#fff', borderColor: COLORS.border, textStyle: { color: COLORS.brandSecondary, fontSize: 12 } },
@@ -26,10 +37,10 @@ export default function CyclingPage() {
     },
     yAxis: { type: 'value', axisLabel: { fontSize: 11, color: '#94a3b8' } },
     series: [{
-      name: 'Cyklisté',
+      name: 'Chodci',
       type: 'bar',
-      data: trend?.map(d => d.cyclists) ?? [],
-      itemStyle: { color: COLORS.brandAccent, borderRadius: [3, 3, 0, 0] },
+      data: trend?.map(d => d.pedestrians) ?? [],
+      itemStyle: { color: PED_COLOR, borderRadius: [3, 3, 0, 0] },
     }],
   }
 
@@ -44,20 +55,18 @@ export default function CyclingPage() {
     },
     yAxis: { type: 'value', axisLabel: { fontSize: 11, color: '#94a3b8' } },
     series: [{
-      name: 'Prům. cyklisté',
+      name: 'Prům. chodci',
       type: 'line',
       smooth: true,
       data: Array.from({ length: 24 }, (_, h) => {
         const pt = hourly?.find(p => Number(p.hour) === h)
-        return pt?.avg_cyclists ?? 0
+        return pt?.avg_pedestrians ?? 0
       }),
-      itemStyle: { color: COLORS.brandAccent },
-      lineStyle: { color: COLORS.brandAccent, width: 2 },
-      areaStyle: { color: COLORS.brandAccent + '25' },
+      itemStyle: { color: PED_COLOR },
+      lineStyle: { color: PED_COLOR, width: 2 },
+      areaStyle: { color: PED_COLOR + '25' },
     }],
   }
-
-  const topCounters = (byCounter ?? []).slice(0, 10)
 
   const comparisonOption = {
     tooltip: { trigger: 'axis', backgroundColor: '#fff', borderColor: COLORS.border, textStyle: { color: COLORS.brandSecondary, fontSize: 12 } },
@@ -85,16 +94,45 @@ export default function CyclingPage() {
         type: 'line',
         smooth: true,
         data: comparison?.map(d => d.pedestrians) ?? [],
-        itemStyle: { color: '#6366f1' },
-        lineStyle: { color: '#6366f1', width: 2 },
-        areaStyle: { color: '#6366f120' },
+        itemStyle: { color: PED_COLOR },
+        lineStyle: { color: PED_COLOR, width: 2 },
+        areaStyle: { color: PED_COLOR + '20' },
       },
     ],
   }
 
-  // Detect how many days of data are actually available
-  const availableDays = trend && trend.length > 0 ? trend.length : null
-  const dataLimited = availableDays !== null && availableDays < days
+  const byCounterOption = {
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#fff',
+      borderColor: COLORS.border,
+      formatter: (params: { dataIndex: number }[]) => {
+        const c = (byCounter ?? [])[params[0].dataIndex]
+        return `<span style="font-weight:600">${c?.name || c?.counter_id}</span><br/>Chodci: <b>${(c?.total_pedestrians ?? 0).toLocaleString('cs-CZ')}</b>`
+      },
+    },
+    grid: { left: 8, right: 16, bottom: 8, top: 8, containLabel: true },
+    xAxis: {
+      type: 'value',
+      axisLabel: { fontSize: 11, color: '#94a3b8' },
+      splitLine: { lineStyle: { color: COLORS.border } },
+    },
+    yAxis: {
+      type: 'category',
+      data: (byCounter ?? []).map(c => c.name || c.counter_id),
+      axisLabel: { fontSize: 11, color: '#64748b', width: 160, overflow: 'truncate' },
+      axisLine: { show: false },
+      axisTick: { show: false },
+    },
+    series: [{
+      type: 'bar',
+      barMaxWidth: 18,
+      data: (byCounter ?? []).map(c => ({
+        value: c.total_pedestrians,
+        itemStyle: { color: PED_COLOR, borderRadius: [0, 3, 3, 0] },
+      })),
+    }],
+  }
 
   return (
     <div className="max-w-screen-2xl mx-auto px-6 py-8 space-y-8">
@@ -102,12 +140,11 @@ export default function CyclingPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Bike size={20} className="text-brand-accent" />
-            <h1 className="text-2xl font-bold text-brand-secondary">Cyklistika v Praze</h1>
+            <Footprints size={20} style={{ color: PED_COLOR }} />
+            <h1 className="text-2xl font-bold text-brand-secondary">Chodci v Praze</h1>
           </div>
-          <p className="text-sm text-gray-500">Data z počítadel kol Golemio — hodinová měření indukčních smyček</p>
+          <p className="text-sm text-gray-500">Data ze 6 sdílených stezek Golemio — počítadla měřící cyklisty i chodce</p>
         </div>
-        {/* Segmented range control */}
         <div className="flex rounded-xl border border-border overflow-hidden bg-white shrink-0">
           {DAY_OPTIONS.map((d, i) => {
             const exceeds = availableDays !== null && d > availableDays
@@ -120,11 +157,12 @@ export default function CyclingPage() {
                   'px-3 py-1.5 text-xs font-medium transition-all',
                   i > 0 ? 'border-l border-border' : '',
                   days === d
-                    ? 'bg-brand-accent text-white'
+                    ? 'text-white'
                     : exceeds
                       ? 'text-gray-300 cursor-not-allowed'
                       : 'text-gray-600 hover:bg-surface',
                 ].join(' ')}
+                style={days === d ? { backgroundColor: PED_COLOR } : {}}
               >
                 {d} dní
               </button>
@@ -141,10 +179,31 @@ export default function CyclingPage() {
         </div>
       )}
 
-      {/* Charts row */}
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Chodci za posl. 7 dní', value: kpis ? formatCount(kpis.total_7d) : '—', desc: 'Součet všech průchodů na 6 sdílených stezkách' },
+          { label: 'Průměr / den', value: kpis ? formatCount(kpis.avg_per_day) : '—', desc: 'Průměrný denní počet chodců' },
+          { label: 'Špičková hodina', value: kpis?.peak_hour != null ? `${kpis.peak_hour}:00` : '—', desc: 'Hodina s nejvyšším průměrným provozem' },
+          { label: 'Aktivní stanice', value: kpis ? String(kpis.active_counters) : '—', desc: 'Počítadla s daty o chodnících' },
+        ].map(k => (
+          <div key={k.label} className="bg-white rounded-2xl border border-border p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: PED_COLOR + '18' }}>
+              <Footprints size={18} style={{ color: PED_COLOR }} />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-brand-secondary tabular-nums">{k.value}</div>
+              <div className="text-sm font-medium text-gray-600 mt-0.5">{k.label}</div>
+              <div className="text-xs text-gray-400 mt-1 leading-relaxed">{k.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Trend + Hourly charts */}
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-border p-6">
-          <h2 className="text-sm font-semibold text-brand-secondary mb-4">Denní počet cyklistů</h2>
+          <h2 className="text-sm font-semibold text-brand-secondary mb-4">Denní počet chodců</h2>
           {trendLoading ? (
             <div className="h-56 animate-pulse bg-surface rounded-xl" />
           ) : (
@@ -157,7 +216,7 @@ export default function CyclingPage() {
         </div>
       </div>
 
-      {/* Cyclist vs pedestrian comparison */}
+      {/* Comparison chart */}
       <div className="bg-white rounded-2xl border border-border p-6">
         <div className="mb-4">
           <h2 className="text-sm font-semibold text-brand-secondary">Cyklisté vs. chodci na sdílených stezkách</h2>
@@ -170,55 +229,18 @@ export default function CyclingPage() {
         )}
       </div>
 
-      {/* Top counters table */}
-      <div className="bg-white rounded-2xl border border-border">
-        <div className="px-6 py-4 border-b border-border">
+      {/* By counter bar chart */}
+      <div className="bg-white rounded-2xl border border-border p-6">
+        <div className="mb-4">
           <h2 className="text-sm font-semibold text-brand-secondary">
-            Nejaktivnější počítadla — posl. {dataLimited ? availableDays : days} dní
+            Počet chodců dle stanice — posl. {dataLimited ? availableDays : days} dní
             {dataLimited && <span className="ml-1 font-normal text-gray-400">(z {days} požadovaných)</span>}
           </h2>
         </div>
         {counterLoading ? (
-          <div className="p-6 space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-10 animate-pulse bg-surface rounded-lg" />
-            ))}
-          </div>
+          <div className="h-48 animate-pulse bg-surface rounded-xl" />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Počítadlo</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Trasa</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Celkem cyklistů</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topCounters.map((c, i) => (
-                  <tr key={c.counter_id} className="border-b border-border/50 hover:bg-surface/50 transition-colors">
-                    <td className="px-6 py-3.5 text-gray-400 text-xs">{i + 1}</td>
-                    <td className="px-4 py-3.5">
-                      <div className="font-medium text-brand-secondary">{c.name || c.counter_id}</div>
-                      <div className="text-xs text-gray-400 font-mono">{c.counter_id}</div>
-                    </td>
-                    <td className="px-4 py-3.5 text-gray-500 text-sm">{c.route || '—'}</td>
-                    <td className="px-6 py-3.5 text-right font-semibold tabular-nums text-brand-accent">
-                      {formatCount(c.total_cyclists)}
-                    </td>
-                  </tr>
-                ))}
-                {topCounters.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-gray-400 text-sm">
-                      Žádná data — zkontrolujte pipeline Keboola
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ReactECharts option={byCounterOption} style={{ height: 200 }} />
         )}
       </div>
     </div>

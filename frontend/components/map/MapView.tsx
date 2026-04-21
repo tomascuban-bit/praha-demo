@@ -42,13 +42,16 @@ export default function MapView({ data }: Props) {
 
   const maxCount = Math.max(...data.bicycle_counters.map(c => c.count_7d), 1)
 
-  // Build bike icons keyed by counter id
+  // Build bike icons keyed by counter id — teal for shared bike+pedestrian, green for bike-only
   const bikeIcons = useMemo(() => new Map(
     data.bicycle_counters.map(c => {
       const sz = bikeIconSize(c.count_7d)
+      const bg = c.has_pedestrian ? '#6366f1' : '#2DC653'
+      const emoji = c.has_pedestrian ? '🚲🚶' : '🚲'
+      const fontSize = c.has_pedestrian ? Math.round(sz * 0.35) : Math.round(sz * 0.5)
       return [c.id, L.divIcon({
         html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-          <div style="width:${sz}px;height:${sz}px;background:#2DC653;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:${Math.round(sz * 0.5)}px;line-height:1">🚲</div>
+          <div style="width:${sz}px;height:${sz}px;background:${bg};border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;line-height:1">${emoji}</div>
           <div style="background:rgba(255,255,255,0.92);border-radius:3px;padding:1px 4px;font-size:9px;font-weight:600;color:#444;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.15)">7 dní</div>
         </div>`,
         iconSize: [sz, sz + 16],
@@ -108,6 +111,10 @@ export default function MapView({ data }: Props) {
                   <strong>{c.name}</strong><br />
                   Trasa: {c.route || '—'}<br />
                   Posledních 7 dní: <strong>{c.count_7d.toLocaleString('cs-CZ')} cyklistů</strong><br />
+                  {c.has_pedestrian && (
+                    <span style={{ color: '#6366f1', fontSize: 11 }}>🚶 Měří i chodce</span>
+                  )}
+                  <br />
                   <span style={{ fontSize: 11, color: '#666' }}>
                     {Math.round(c.count_7d / maxCount * 100)} % nejfrekventovanějšího počítadla
                   </span>
@@ -142,5 +149,20 @@ export default function MapView({ data }: Props) {
 
       </LayersControl>
     </MapContainer>
+  )
+}
+
+export function MapLegend() {
+  return (
+    <div className="flex items-center gap-4 text-xs text-gray-500">
+      <div className="flex items-center gap-1.5">
+        <div className="w-4 h-4 rounded-full bg-[#2DC653] border-2 border-white shadow-sm flex items-center justify-center text-[8px]">🚲</div>
+        <span>Pouze cyklisté</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <div className="w-4 h-4 rounded-full bg-[#6366f1] border-2 border-white shadow-sm flex items-center justify-center text-[7px]">🚲🚶</div>
+        <span>Cyklisté + chodci</span>
+      </div>
+    </div>
   )
 }

@@ -8,6 +8,7 @@ from fastapi import APIRouter
 
 from services.data_loader import _DATA
 from routers.parking import PARKING_LOCATIONS, _pk as _parking_pk
+from routers.pedestrian import PEDESTRIAN_COUNTER_IDS
 
 router = APIRouter()
 
@@ -56,6 +57,7 @@ def get_map_data():
                 "lon": float(row["longitude"]),
                 "route": _s(row.get("route")),
                 "count_7d": counts_7d.get(cid, 0),
+                "has_pedestrian": cid in PEDESTRIAN_COUNTER_IDS,
             })
 
     # ── Prague P+R parking lots ───────────────────────────────────────────────
