@@ -49,13 +49,13 @@ export default function MapView({ data }: Props) {
       const bg = c.has_pedestrian ? '#6366f1' : '#2DC653'
       const emoji = c.has_pedestrian ? '🚲🚶' : '🚲'
       const fontSize = c.has_pedestrian ? Math.round(sz * 0.35) : Math.round(sz * 0.5)
-      const chipText = c.has_pedestrian
-        ? `🚲 ${(c.count_7d / 1000).toFixed(1)}k / 🚶 ${(c.pedestrian_7d / 1000).toFixed(1)}k`
-        : '7 dní'
+      const chip = c.has_pedestrian
+        ? `<div style="background:rgba(255,255,255,0.92);border-radius:3px;padding:1px 4px;font-size:9px;font-weight:600;color:#444;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.15)">🚲 ${(c.count_7d / 1000).toFixed(1)}k / 🚶 ${(c.pedestrian_7d / 1000).toFixed(1)}k</div>`
+        : ''
       return [c.id, L.divIcon({
         html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
           <div style="width:${sz}px;height:${sz}px;background:${bg};border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;line-height:1">${emoji}</div>
-          <div style="background:rgba(255,255,255,0.92);border-radius:3px;padding:1px 4px;font-size:9px;font-weight:600;color:#444;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.15)">${chipText}</div>
+          ${chip}
         </div>`,
         iconSize: [sz + (c.has_pedestrian ? 40 : 0), sz + 16],
         iconAnchor: [sz / 2 + (c.has_pedestrian ? 20 : 0), sz / 2],
