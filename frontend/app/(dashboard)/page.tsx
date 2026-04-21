@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
-import { Bike, Radio, TrendingUp, Activity, PersonStanding, ParkingCircle } from 'lucide-react'
+import { Bike, Radio, TrendingUp, Activity, PersonStanding, ParkingCircle, MessageSquare } from 'lucide-react'
+import Link from 'next/link'
 import { useKpis, useOverviewChart, useParkingLots } from '@/lib/api'
 import { formatCount, formatSpeed, pluralize, chartDefaults, COLORS } from '@/lib/constants'
 import { useTheme } from '@/lib/theme'
@@ -273,6 +274,15 @@ export default function OverviewPage() {
               ))}
             </div>
           </div>
+        </div>
+        <div className="border-t border-brand-secondary/10 pt-4 flex justify-end">
+          <Link
+            href="/feedback"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-secondary/20 text-xs text-gray-500 hover:text-brand-secondary hover:border-brand-secondary/40 transition-colors"
+          >
+            <MessageSquare size={12} />
+            Feedback
+          </Link>
         </div>
       </div>
     </div>
