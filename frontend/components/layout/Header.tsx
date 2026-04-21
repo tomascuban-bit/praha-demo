@@ -58,13 +58,14 @@ export default function Header() {
             onClick={toggleKai}
             title="KAI Asistent"
             className={[
-              'w-7 h-7 rounded-full flex items-center justify-center transition-colors',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
               kaiOpen
                 ? 'bg-brand-primary text-white'
-                : 'text-gray-400 dark:text-slate-400 hover:text-brand-secondary dark:hover:text-slate-200 hover:bg-surface dark:hover:bg-slate-800',
+                : 'bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20',
             ].join(' ')}
           >
             <Bot size={15} />
+            KAI
           </button>
 
           {user?.is_authenticated && user.email && (
