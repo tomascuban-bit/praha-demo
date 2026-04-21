@@ -102,10 +102,42 @@ def kai_status():
 
 
 @router.get("/api/kai-debug")
-def kai_debug():
+async def kai_debug():
     kai_token = os.getenv("KAI_TOKEN", "")
     kbc_token = os.getenv("KBC_TOKEN", "")
     kbc_url   = os.getenv("KBC_URL", "")
+
+    # Test a real call to KAI to check upstream status + headers
+    upstream_test = {}
+    try:
+        kai_url = await _discover_kai_url()
+        import uuid as _uuid
+        test_payload = {
+            "id": str(_uuid.uuid4()),
+            "message": {"id": str(_uuid.uuid4()), "role": "user",
+                        "parts": [{"type": "text", "text": "ping"}]},
+            "selectedChatModel": "chat-model",
+            "selectedVisibilityType": "private",
+        }
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.post(
+                f"{kai_url}/api/chat",
+                headers={
+                    "Content-Type": "application/json",
+                    "x-storageapi-token": _token(),
+                    "x-storageapi-url": _storage_base(),
+                },
+                json=test_payload,
+            )
+            body_preview = (await r.aread()).decode(errors="replace")[:300]
+            upstream_test = {
+                "status": r.status_code,
+                "content_type": r.headers.get("content-type", ""),
+                "body_preview": body_preview,
+            }
+    except Exception as e:
+        upstream_test = {"error": str(e)}
+
     return {
         "kai_token_set": bool(kai_token),
         "kbc_token_set": bool(kbc_token),
@@ -113,6 +145,7 @@ def kai_debug():
         "storage_base": _storage_base(),
         "kbc_url_raw": kbc_url[:40] + "..." if len(kbc_url) > 40 else kbc_url,
         "kai_url_cached": _kai_url,
+        "upstream_test": upstream_test,
     }
 
 
