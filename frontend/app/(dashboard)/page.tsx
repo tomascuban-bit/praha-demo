@@ -234,8 +234,8 @@ export default function OverviewPage() {
       </div>
 
       {/* Data sources */}
-      <div className="bg-brand-secondary/[0.03] border border-brand-secondary/10 rounded-2xl p-5">
-        <h3 className="text-sm font-semibold text-brand-secondary mb-3">O dashboardu</h3>
+      <div className="bg-brand-secondary/[0.03] border border-brand-secondary/10 rounded-2xl p-5 space-y-4">
+        <h3 className="text-sm font-semibold text-brand-secondary">O dashboardu</h3>
         <div className="grid md:grid-cols-2 gap-4 text-xs text-gray-600 leading-relaxed">
           <div>
             <span className="font-medium text-brand-secondary">Počítadla cyklistů a chodců</span> — Golemio API poskytuje
@@ -245,6 +245,29 @@ export default function OverviewPage() {
           <div>
             <span className="font-medium text-brand-secondary">Parkování</span> — Aktuální obsazenost
             P+R parkovišť TSK Praha. Obnovováno každé 2 hodiny přes pipeline Keboola z otevřených dat Golemio.
+          </div>
+        </div>
+        <div className="border-t border-brand-secondary/10 pt-4">
+          <p className="text-xs font-medium text-brand-secondary mb-2">Technologie</p>
+          <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-400 font-medium">Frontend</span>
+              {['Next.js 15', 'React 19', 'Apache ECharts', 'Tailwind CSS v4', 'Leaflet'].map(t => (
+                <span key={t} className="px-2 py-0.5 rounded-full bg-brand-secondary/[0.06] text-gray-600">{t}</span>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-400 font-medium">Backend</span>
+              {['FastAPI', 'Python 3.12', 'Snowflake', 'Keboola Data Apps'].map(t => (
+                <span key={t} className="px-2 py-0.5 rounded-full bg-brand-secondary/[0.06] text-gray-600">{t}</span>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-400 font-medium">Pipeline</span>
+              {['Golemio Open API', 'Keboola REST Extractor', 'SQL transformace'].map(t => (
+                <span key={t} className="px-2 py-0.5 rounded-full bg-brand-secondary/[0.06] text-gray-600">{t}</span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
