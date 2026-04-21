@@ -120,7 +120,26 @@ async def kai_debug():
             "selectedVisibilityType": "private",
         }
         async with httpx.AsyncClient(timeout=15) as client:
-            # Test 1: with x-storageapi-url
+            # Validate token against Storage API first
+            sv = await client.get(
+                f"{_storage_base()}/v2/storage",
+                headers={"x-storageapi-token": _token()},
+            )
+            sv_body = (await sv.aread()).decode(errors="replace")
+            try:
+                import json as _json
+                sv_data = _json.loads(sv_body)
+                token_info = {
+                    "storage_status": sv.status_code,
+                    "token_id": sv_data.get("id"),
+                    "token_desc": sv_data.get("description", "")[:60],
+                    "is_master": sv_data.get("isMasterToken"),
+                    "project_id": (sv_data.get("owner") or {}).get("id"),
+                }
+            except Exception:
+                token_info = {"storage_status": sv.status_code, "raw": sv_body[:150]}
+
+            # KAI call
             r1 = await client.post(
                 f"{kai_url}/api/chat",
                 headers={
@@ -130,24 +149,12 @@ async def kai_debug():
                 },
                 json=test_payload,
             )
-            b1 = (await r1.aread()).decode(errors="replace")[:150]
-
-            # Test 2: token only, no URL header
-            import uuid as _uuid2
-            test_payload2 = {**test_payload, "id": str(_uuid2.uuid4()), "message": {**test_payload["message"], "id": str(_uuid2.uuid4())}}
-            r2 = await client.post(
-                f"{kai_url}/api/chat",
-                headers={
-                    "Content-Type": "application/json",
-                    "x-storageapi-token": _token(),
-                },
-                json=test_payload2,
-            )
-            b2 = (await r2.aread()).decode(errors="replace")[:150]
+            b1 = (await r1.aread()).decode(errors="replace")[:200]
 
             upstream_test = {
-                "with_url_header": {"status": r1.status_code, "ct": r1.headers.get("content-type", ""), "body": b1},
-                "without_url_header": {"status": r2.status_code, "ct": r2.headers.get("content-type", ""), "body": b2},
+                "token_validation": token_info,
+                "kai_status": r1.status_code,
+                "kai_body": b1,
             }
     except Exception as e:
         upstream_test = {"error": str(e)}
