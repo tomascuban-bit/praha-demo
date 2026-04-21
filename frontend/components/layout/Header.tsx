@@ -1,13 +1,15 @@
 'use client'
 
 import { useCurrentUser, usePlatformInfo } from '@/lib/api'
-import { ExternalLink, Sun, Moon } from 'lucide-react'
+import { ExternalLink, Sun, Moon, Bot } from 'lucide-react'
 import { useTheme } from '@/lib/theme'
+import { useKai } from '@/lib/kai-context'
 
 export default function Header() {
   const { data: user } = useCurrentUser()
   const { data: platform } = usePlatformInfo()
   const { theme, toggle } = useTheme()
+  const { toggle: toggleKai, isOpen: kaiOpen } = useKai()
 
   const projectUrl = platform?.connection_url && platform?.project_id
     ? `${platform.connection_url}/admin/projects/${platform.project_id}`
@@ -50,6 +52,19 @@ export default function Header() {
             title={theme === 'dark' ? 'Přepnout na světlý režim' : 'Přepnout na tmavý režim'}
           >
             {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+
+          <button
+            onClick={toggleKai}
+            title="KAI Asistent"
+            className={[
+              'w-7 h-7 rounded-full flex items-center justify-center transition-colors',
+              kaiOpen
+                ? 'bg-brand-primary text-white'
+                : 'text-gray-400 dark:text-slate-400 hover:text-brand-secondary dark:hover:text-slate-200 hover:bg-surface dark:hover:bg-slate-800',
+            ].join(' ')}
+          >
+            <Bot size={15} />
           </button>
 
           {user?.is_authenticated && user.email && (

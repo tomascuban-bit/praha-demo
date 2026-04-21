@@ -37,7 +37,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from routers import overview, cycling, pedestrian, query, environment, map_data, parking, feedback  # noqa: E402
+from routers import overview, cycling, pedestrian, query, environment, map_data, parking, feedback, kai  # noqa: E402
 
 app.include_router(overview.router)
 app.include_router(cycling.router)
@@ -47,6 +47,7 @@ app.include_router(environment.router)
 app.include_router(map_data.router)
 app.include_router(parking.router)
 app.include_router(feedback.router)
+app.include_router(kai.router)
 
 
 @app.get("/api/health")
