@@ -23,7 +23,7 @@ _kai_url: str | None = None
 
 
 def _token() -> str:
-    return os.getenv("KAI_TOKEN") or os.getenv("KBC_TOKEN", "")
+    return (os.getenv("KAI_TOKEN", "") or os.getenv("KBC_TOKEN", "")).strip()
 
 
 def _storage_base() -> str:
@@ -120,7 +120,8 @@ async def kai_debug():
             "selectedVisibilityType": "private",
         }
         async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.post(
+            # Test 1: with x-storageapi-url
+            r1 = await client.post(
                 f"{kai_url}/api/chat",
                 headers={
                     "Content-Type": "application/json",
@@ -129,11 +130,24 @@ async def kai_debug():
                 },
                 json=test_payload,
             )
-            body_preview = (await r.aread()).decode(errors="replace")[:300]
+            b1 = (await r1.aread()).decode(errors="replace")[:150]
+
+            # Test 2: token only, no URL header
+            import uuid as _uuid2
+            test_payload2 = {**test_payload, "id": str(_uuid2.uuid4()), "message": {**test_payload["message"], "id": str(_uuid2.uuid4())}}
+            r2 = await client.post(
+                f"{kai_url}/api/chat",
+                headers={
+                    "Content-Type": "application/json",
+                    "x-storageapi-token": _token(),
+                },
+                json=test_payload2,
+            )
+            b2 = (await r2.aread()).decode(errors="replace")[:150]
+
             upstream_test = {
-                "status": r.status_code,
-                "content_type": r.headers.get("content-type", ""),
-                "body_preview": body_preview,
+                "with_url_header": {"status": r1.status_code, "ct": r1.headers.get("content-type", ""), "body": b1},
+                "without_url_header": {"status": r2.status_code, "ct": r2.headers.get("content-type", ""), "body": b2},
             }
     except Exception as e:
         upstream_test = {"error": str(e)}
