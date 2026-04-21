@@ -53,6 +53,8 @@ async def _discover_kai_url() -> str:
 
 async def _proxy_sse(payload: dict) -> StreamingResponse:
     kai_url = await _discover_kai_url()
+    token = _token()
+    storage_base = _storage_base()
 
     async def stream():
         async with httpx.AsyncClient(timeout=120) as client:
@@ -61,11 +63,13 @@ async def _proxy_sse(payload: dict) -> StreamingResponse:
                 f"{kai_url}/api/chat",
                 headers={
                     "Content-Type": "application/json",
-                    "x-storageapi-token": _token(),
-                    "x-storageapi-url": _storage_base(),
+                    "Authorization": f"Bearer {token}",
+                    "x-storageapi-token": token,
+                    "x-storageapi-url": storage_base,
                 },
                 json=payload,
             ) as r:
+                logger.info("KAI upstream status: %d", r.status_code)
                 async for chunk in r.aiter_bytes():
                     yield chunk
 
@@ -89,6 +93,21 @@ class _ChatPayload(BaseModel):
 def kai_status():
     configured = bool(_token() and _storage_base())
     return {"configured": configured}
+
+
+@router.get("/api/kai-debug")
+def kai_debug():
+    kai_token = os.getenv("KAI_TOKEN", "")
+    kbc_token = os.getenv("KBC_TOKEN", "")
+    kbc_url   = os.getenv("KBC_URL", "")
+    return {
+        "kai_token_set": bool(kai_token),
+        "kbc_token_set": bool(kbc_token),
+        "active_token_prefix": (_token() or "")[:12] + "..." if _token() else None,
+        "storage_base": _storage_base(),
+        "kbc_url_raw": kbc_url[:40] + "..." if len(kbc_url) > 40 else kbc_url,
+        "kai_url_cached": _kai_url,
+    }
 
 
 @router.post("/api/chat")
