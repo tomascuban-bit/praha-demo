@@ -23,34 +23,13 @@ logger = logging.getLogger(__name__)
 _kai_url: str | None = None
 _initialized_chats: set[str] = set()
 
+# The default instruction is intentionally generic — no internal table FQNs or database names.
+# In production, set KAI_SYSTEM_INSTRUCTION as a Keboola secret with the full instruction
+# including Snowflake fully-qualified table names and column schemas.
 _DEFAULT_INSTRUCTION = """You are a Prague city mobility data assistant for the Keboola Demo App. \
-Only query the tables listed below. \
-Never access any other Keboola bucket, token, component, flow, or project. \
-If asked about anything else, say you can only help with Prague mobility data.
-
-SNOWFLAKE FULLY-QUALIFIED TABLE NAMES (use exactly as written):
-  "KBC_USE4_347"."out.c-Praha-Demo-Golemio-to-Output-Tables"."bicycle_measurements"
-  "KBC_USE4_347"."out.c-Praha-Demo-Golemio-to-Output-Tables"."bicycle_counters"
-  "KBC_USE4_347"."out.c-Praha-Demo-Golemio-to-Output-Tables"."parking_occupancy"
-
-SCHEMAS (all columns are TEXT type — cast as needed):
-
-bicycle_measurements — 896k rows, hourly intervals:
-  counter_id, measured_from, measured_to, total_count, total_pedestrians
-  Timestamp format: 'YYYY-MM-DDTHH:MI:SS+HH:MM'  e.g. '2026-04-22T10:00:00+0200'
-  Date filter example: WHERE measured_from >= '2026-04-14T00:00:00+0000'
-  Numeric cast: CAST(total_count AS INTEGER), CAST(total_pedestrians AS INTEGER)
-  Join for names: JOIN "KBC_USE4_347"."out.c-Praha-Demo-Golemio-to-Output-Tables"."bicycle_counters" bc ON m.counter_id = bc.id
-
-bicycle_counters — 40 rows: id, name, latitude, longitude, route
-
-parking_occupancy — 97 rows, current P+R snapshot:
-  parking_id, source, total_spots, free_spots, occupied_spots, has_free_spots, last_updated
-  TSK lots only: WHERE source = 'tsk-offstreet'
-  Numeric cast: CAST(free_spots AS INTEGER), CAST(total_spots AS INTEGER)
-
-IMPORTANT: Use the fully-qualified names above directly — do NOT run any queries \
-to discover the database name, schema name, or column types. Write one efficient SQL query per question."""
+You can answer questions about bicycle counter measurements and P+R parking occupancy in Prague. \
+Never access any data outside of what is described here. \
+If asked about anything else, say you can only help with Prague mobility data."""
 
 
 def _token() -> str:
@@ -157,74 +136,6 @@ def kai_status():
     configured = bool(_token() and _storage_base())
     return {"configured": configured}
 
-
-@router.get("/api/kai-debug")
-async def kai_debug():
-    kai_token = os.getenv("KAI_TOKEN", "")
-    kbc_token = os.getenv("KBC_TOKEN", "")
-    kbc_url   = os.getenv("KBC_URL", "")
-
-    # Test a real call to KAI to check upstream status + headers
-    upstream_test = {}
-    try:
-        kai_url = await _discover_kai_url()
-        import uuid as _uuid
-        test_payload = {
-            "id": str(_uuid.uuid4()),
-            "message": {"id": str(_uuid.uuid4()), "role": "user",
-                        "parts": [{"type": "text", "text": "ping"}]},
-            "selectedChatModel": "chat-model",
-            "selectedVisibilityType": "private",
-        }
-        async with httpx.AsyncClient(timeout=15) as client:
-            # Validate token via /v2/storage/tokens/verify
-            sv = await client.post(
-                f"{_storage_base()}/v2/storage/tokens/verify",
-                headers={"x-storageapi-token": _token()},
-            )
-            sv_body = (await sv.aread()).decode(errors="replace")
-            try:
-                import json as _json
-                sv_data = _json.loads(sv_body)
-                token_info = {
-                    "storage_status": sv.status_code,
-                    "token_id": sv_data.get("id"),
-                    "token_desc": sv_data.get("description", "")[:60],
-                    "is_master": sv_data.get("isMasterToken"),
-                    "project_id": (sv_data.get("owner") or {}).get("id"),
-                }
-            except Exception:
-                token_info = {"storage_status": sv.status_code, "raw": sv_body[:150]}
-
-            # KAI call
-            r1 = await client.post(
-                f"{kai_url}/api/chat",
-                headers={
-                    "Content-Type": "application/json",
-                    "x-storageapi-token": _token(),
-                    "x-storageapi-url": _storage_base(),
-                },
-                json=test_payload,
-            )
-            b1 = (await r1.aread()).decode(errors="replace")[:200]
-
-            upstream_test = {
-                "token_validation": token_info,
-                "kai_status": r1.status_code,
-                "kai_body": b1,
-            }
-    except Exception as e:
-        upstream_test = {"error": str(e)}
-
-    return {
-        "kai_token_set": bool(kai_token),
-        "kbc_token_set": bool(kbc_token),
-        "active_token_prefix": (_token() or "")[:12] + "..." if _token() else None,
-        "storage_base": _storage_base(),
-        "kbc_url_raw": kbc_url[:40] + "..." if len(kbc_url) > 40 else kbc_url,
-        "kai_url_cached": _kai_url,
-        "upstream_test": upstream_test,
-    }
 
 
 @router.post("/api/chat")
