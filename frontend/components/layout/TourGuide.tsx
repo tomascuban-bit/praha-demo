@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { X } from 'lucide-react'
 import { TOUR_KEY, TOUR_STEPS } from '@/lib/tour-steps'
 import { useTour } from '@/lib/tour-context'
 
@@ -9,16 +10,24 @@ const SPOTLIGHT_PAD = 6
 
 interface Rect { top: number; left: number; width: number; height: number }
 
+// Center point with zero size — box-shadow covers entire screen, no visible hole
+const centerRect = (): Rect => ({
+  top:    window.innerHeight / 2,
+  left:   window.innerWidth  / 2,
+  width:  0,
+  height: 0,
+})
+
 export default function TourGuide() {
   const { isOpen, openTour, closeTour } = useTour()
-  const [step, setStep]               = useState(0)
-  const [rect, setRect]               = useState<Rect | null>(null)
-  const modalRef                       = useRef<HTMLDivElement>(null)
-  const titleId                        = useId()
-  const stepRef                        = useRef(step)
+  const [step, setStep]                 = useState(0)
+  const [rect, setRect]                 = useState<Rect | null>(null)
+  const modalRef                         = useRef<HTMLDivElement>(null)
+  const titleId                          = useId()
+  const stepRef                          = useRef(step)
   stepRef.current = step
 
-  // Auto-open once on first visit — localStorage read is inside useEffect (SSR-safe)
+  // Auto-open once on first visit — localStorage read inside useEffect (SSR-safe)
   useEffect(() => {
     if (!localStorage.getItem(TOUR_KEY)) {
       const t = setTimeout(openTour, OPEN_DELAY_MS)
@@ -26,17 +35,17 @@ export default function TourGuide() {
     }
   }, [openTour])
 
-  // Reset step when tour closes
+  // Reset when tour closes
   useEffect(() => {
     if (!isOpen) { setStep(0); setRect(null) }
   }, [isOpen])
 
-  // Compute spotlight rect for current step's target
+  // Always resolves to a Rect — no-target steps use center+0 so box-shadow covers full screen
   const reposition = useCallback(() => {
     const targetId = TOUR_STEPS[stepRef.current]?.targetId
-    if (!targetId) { setRect(null); return }
+    if (!targetId) { setRect(centerRect()); return }
     const el = document.querySelector(`[data-tour-id="${targetId}"]`)
-    if (!el) { setRect(null); return }
+    if (!el)       { setRect(centerRect()); return }
     const r = el.getBoundingClientRect()
     setRect({
       top:    r.top    - SPOTLIGHT_PAD,
@@ -77,10 +86,10 @@ export default function TourGuide() {
   useEffect(() => {
     if (!isOpen) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape')      { handleDismiss(); return }
-      if (e.key === 'ArrowRight')  { handleNext();    return }
-      if (e.key === 'ArrowLeft')   { handlePrev();    return }
-      if (e.key !== 'Tab')         return
+      if (e.key === 'Escape')     { handleDismiss(); return }
+      if (e.key === 'ArrowRight') { handleNext();    return }
+      if (e.key === 'ArrowLeft')  { handlePrev();    return }
+      if (e.key !== 'Tab') return
 
       const modal = modalRef.current
       if (!modal) return
@@ -111,36 +120,36 @@ export default function TourGuide() {
 
   return (
     <>
-      {/* Transparent click-capture backdrop — dismisses on click */}
+      {/* Transparent click-capture — dismisses tour on outside click */}
       <div
         className="fixed inset-0 z-[49]"
         onClick={handleDismiss}
         aria-hidden="true"
       />
 
-      {/* Spotlight hole (box-shadow trick) or full dark overlay */}
-      {rect ? (
-        <div
-          className="fixed rounded-lg pointer-events-none z-[50]"
-          style={{
-            top:       rect.top,
-            left:      rect.left,
-            width:     rect.width,
-            height:    rect.height,
-            boxShadow: '0 0 0 9999px rgba(0,0,0,0.65)',
-            transition: 'top 150ms ease, left 150ms ease, width 150ms ease, height 150ms ease',
-          }}
-          aria-hidden="true"
-        />
-      ) : (
-        <div
-          className="fixed inset-0 pointer-events-none z-[50]"
-          style={{ background: 'rgba(0,0,0,0.65)' }}
-          aria-hidden="true"
-        />
-      )}
+      {/*
+        Single unified spotlight div.
+        No-target steps: center + 0 size → box-shadow covers entire screen (full dark, no hole).
+        Target steps: positioned over element → box-shadow + white ring create visible spotlight.
+        Smooth CSS transition between all states — no div-swap snap.
+      */}
+      <div
+        className="fixed rounded-lg pointer-events-none z-[50]"
+        style={{
+          top:    rect?.top    ?? 0,
+          left:   rect?.left   ?? 0,
+          width:  rect?.width  ?? 0,
+          height: rect?.height ?? 0,
+          boxShadow: rect && (rect.width > 0 || rect.height > 0)
+            ? '0 0 0 9999px rgba(0,0,0,0.78), 0 0 0 3px rgba(255,255,255,0.6)'
+            : '0 0 0 9999px rgba(0,0,0,0.78)',
+          transition: 'top 150ms ease, left 150ms ease, width 150ms ease, height 150ms ease',
+          opacity: rect !== null ? 1 : 0,
+        }}
+        aria-hidden="true"
+      />
 
-      {/* Modal — sits in lower viewport, never overlaps top-nav spotlight targets */}
+      {/* Modal — anchored in lower viewport, safely below all header/nav spotlight targets */}
       <div
         className="fixed left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-4"
         style={{ top: '58vh' }}
@@ -187,10 +196,10 @@ export default function TourGuide() {
                 </span>
                 <button
                   onClick={handleDismiss}
-                  className="w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-base leading-none"
+                  className="w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                   aria-label="Zavřít průvodce"
                 >
-                  ✕
+                  <X size={13} />
                 </button>
               </div>
             </div>
@@ -210,7 +219,7 @@ export default function TourGuide() {
               {current.description}
             </p>
 
-            {/* Navigation buttons */}
+            {/* Navigation */}
             <div className="flex items-center justify-between">
               <button
                 onClick={handleDismiss}

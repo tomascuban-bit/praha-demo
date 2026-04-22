@@ -1,7 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useCurrentUser, usePlatformInfo } from '@/lib/api'
-import { ExternalLink, Sun, Moon, Bot, HelpCircle } from 'lucide-react'
+import { ExternalLink, Sun, Moon, Bot, HelpCircle, MessageSquare } from 'lucide-react'
 import { useTheme } from '@/lib/theme'
 import { useKai } from '@/lib/kai-context'
 import { useTour } from '@/lib/tour-context'
@@ -65,6 +66,16 @@ export default function Header() {
           >
             <HelpCircle size={15} />
           </button>
+
+          <Link
+            href="/feedback"
+            data-tour-id="feedback-button"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 dark:text-slate-400 hover:text-brand-secondary dark:hover:text-slate-200 hover:bg-surface dark:hover:bg-slate-800 transition-colors"
+            title="Zpětná vazba"
+            aria-label="Zpětná vazba"
+          >
+            <MessageSquare size={15} />
+          </Link>
 
           <button
             onClick={toggleKai}

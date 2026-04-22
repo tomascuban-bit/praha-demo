@@ -55,8 +55,8 @@ export const TOUR_STEPS: TourStep[] = [
   },
   {
     title: 'Zpětná vazba',
-    description: 'Máte nápad na vylepšení nebo připomínku k datům? Použijte tlačítko Zpětná vazba na hlavní stránce a napište nám. Rádi se dozvíme, co by mohlo být lepší.',
+    description: 'Máte nápad na vylepšení nebo připomínku k datům? Klikněte na ikonu zprávy v záhlaví aplikace a napište nám. Rádi se dozvíme, co by mohlo být lepší.',
     icon: MessageSquare,
-    targetId: null,
+    targetId: 'feedback-button',
   },
 ]
