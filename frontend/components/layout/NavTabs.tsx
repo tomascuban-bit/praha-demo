@@ -5,12 +5,12 @@ import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Bike, Footprints, BarChart2, Map, ParkingCircle } from 'lucide-react'
 
 const TABS = [
-  { href: '/',            label: 'Přehled',     icon: LayoutDashboard },
-  { href: '/cycling',     label: 'Cyklistika',  icon: Bike },
-  { href: '/pedestrian',  label: 'Chodci',      icon: Footprints },
-  { href: '/parking',     label: 'Parkování',   icon: ParkingCircle },
-  { href: '/map',         label: 'Mapa města',  icon: Map },
-  { href: '/custom',      label: 'Reporty',     icon: BarChart2 },
+  { href: '/',            label: 'Přehled',     icon: LayoutDashboard, tourId: 'tab-overview' },
+  { href: '/cycling',     label: 'Cyklistika',  icon: Bike,            tourId: 'tab-cycling'  },
+  { href: '/pedestrian',  label: 'Chodci',      icon: Footprints,      tourId: 'tab-pedestrian' },
+  { href: '/parking',     label: 'Parkování',   icon: ParkingCircle,   tourId: 'tab-parking'  },
+  { href: '/map',         label: 'Mapa města',  icon: Map,             tourId: 'tab-map'      },
+  { href: '/custom',      label: 'Reporty',     icon: BarChart2,       tourId: 'tab-custom'   },
 ]
 
 export default function NavTabs() {
@@ -20,12 +20,13 @@ export default function NavTabs() {
     <nav className="bg-white dark:bg-slate-900 border-b border-border">
       <div className="max-w-screen-2xl mx-auto px-6">
         <div className="flex gap-1">
-          {TABS.map(({ href, label, icon: Icon }) => {
+          {TABS.map(({ href, label, icon: Icon, tourId }) => {
             const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
             return (
               <Link
                 key={href}
                 href={href}
+                data-tour-id={tourId}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all
                   ${active
                     ? 'border-brand-primary text-brand-primary'

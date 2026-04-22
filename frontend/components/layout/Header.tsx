@@ -1,15 +1,17 @@
 'use client'
 
 import { useCurrentUser, usePlatformInfo } from '@/lib/api'
-import { ExternalLink, Sun, Moon, Bot } from 'lucide-react'
+import { ExternalLink, Sun, Moon, Bot, HelpCircle } from 'lucide-react'
 import { useTheme } from '@/lib/theme'
 import { useKai } from '@/lib/kai-context'
+import { useTour } from '@/lib/tour-context'
 
 export default function Header() {
   const { data: user } = useCurrentUser()
   const { data: platform } = usePlatformInfo()
   const { theme, toggle } = useTheme()
   const { toggle: toggleKai, isOpen: kaiOpen } = useKai()
+  const { openTour, triggerRef } = useTour()
 
   const projectUrl = platform?.connection_url && platform?.project_id
     ? `${platform.connection_url}/admin/projects/${platform.project_id}`
@@ -55,8 +57,19 @@ export default function Header() {
           </button>
 
           <button
+            ref={triggerRef}
+            onClick={openTour}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 dark:text-slate-400 hover:text-brand-secondary dark:hover:text-slate-200 hover:bg-surface dark:hover:bg-slate-800 transition-colors"
+            title="Spustit průvodce aplikací"
+            aria-label="Spustit průvodce aplikací"
+          >
+            <HelpCircle size={15} />
+          </button>
+
+          <button
             onClick={toggleKai}
             title="KAI Asistent"
+            data-tour-id="kai-button"
             className={[
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
               kaiOpen
