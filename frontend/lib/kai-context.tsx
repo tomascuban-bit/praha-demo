@@ -124,11 +124,15 @@ export function KaiProvider({ children }: { children: React.ReactNode }) {
     let accumulated = ''
     let gotText = false
 
+    const abort = new AbortController()
+    const timeoutId = setTimeout(() => abort.abort(), 90_000)
+
     try {
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: body !== undefined ? JSON.stringify(body) : undefined,
+        signal: abort.signal,
       })
 
       if (!res.ok || !res.body) {
@@ -193,9 +197,15 @@ export function KaiProvider({ children }: { children: React.ReactNode }) {
           }
         }
       }
-    } catch (err) {
-      patchStreaming(m => ({ ...m, content: 'Chyba připojení. Zkuste to znovu.', isError: true }))
-      console.error('KAI stream error:', err)
+    } catch (err: unknown) {
+      const isTimeout = err instanceof Error && err.name === 'AbortError'
+      const msg = isTimeout
+        ? 'KAI trvá příliš dlouho. Zkuste jednodušší dotaz nebo to zkuste znovu.'
+        : 'Chyba připojení. Zkuste to znovu.'
+      patchStreaming(m => ({ ...m, content: msg, isError: true }))
+      if (!isTimeout) console.error('KAI stream error:', err)
+    } finally {
+      clearTimeout(timeoutId)
     }
 
     if (!gotText && !pendingApproval) {
