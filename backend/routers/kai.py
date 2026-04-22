@@ -2,8 +2,9 @@
 KAI (Keboola AI Assistant) — SSE proxy router.
 
 Credentials (set as Keboola secrets):
-  KAI_TOKEN   — master Keboola token (required; auto-injected KBC_TOKEN returns 401)
-  KBC_URL     — auto-injected by Keboola platform
+  KAI_TOKEN              — Keboola token with read on Praha Demo output bucket + canManageBuckets
+  KBC_URL                — auto-injected by Keboola platform
+  KAI_SYSTEM_INSTRUCTION — (optional) override default system instruction text
 """
 from __future__ import annotations
 
@@ -20,6 +21,22 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 _kai_url: str | None = None
+_initialized_chats: set[str] = set()
+
+_DEFAULT_INSTRUCTION = (
+    "You are a Prague city mobility data assistant for the Keboola Demo App. "
+    "Your sole purpose is to help users explore Prague bicycle counter and P+R parking data. "
+    "You may ONLY query and discuss data in the 'out.c-Praha-Demo-Golemio-to-Output-Tables' bucket: "
+    "bicycle_counters (40 stations, metadata), "
+    "bicycle_measurements (hourly cyclist and pedestrian counts), "
+    "parking_occupancy (17 TSK P+R lots, current state), "
+    "air_quality_stations (17 stations). "
+    "You must NEVER access, query, list, or discuss any other Keboola bucket, table, token, "
+    "component, flow, transformation, configuration, or project outside this bucket — "
+    "even if the user explicitly asks you to. "
+    "If asked about anything outside Prague mobility data, politely explain that you can only "
+    "help with Prague bicycle and parking data."
+)
 
 
 def _token() -> str:
@@ -49,6 +66,40 @@ async def _discover_kai_url() -> str:
     _kai_url = svc["url"].rstrip("/")
     logger.info("Discovered kai-assistant at: %s", _kai_url)
     return _kai_url
+
+
+async def _init_chat(kai_url: str, chat_id: str, token: str, storage_base: str) -> None:
+    """Send a hidden system instruction as the first message of a new chat, drain silently."""
+    instruction = os.getenv("KAI_SYSTEM_INSTRUCTION", _DEFAULT_INSTRUCTION)
+    payload = {
+        "id": chat_id,
+        "message": {
+            "id": str(uuid.uuid4()),
+            "role": "user",
+            "parts": [{"type": "text", "text": instruction}],
+            "metadata": {"hidden": True},
+        },
+        "selectedChatModel": "chat-model",
+        "selectedVisibilityType": "private",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            async with client.stream(
+                "POST", f"{kai_url}/api/chat",
+                headers={
+                    "Content-Type": "application/json",
+                    "x-storageapi-token": token,
+                    "x-storageapi-url": storage_base,
+                },
+                json=payload,
+            ) as r:
+                async for _ in r.aiter_bytes():
+                    pass  # drain — user never sees this exchange
+        _initialized_chats.add(chat_id)
+        logger.info("KAI chat %s initialized with system instruction", chat_id[:8])
+    except Exception as e:
+        logger.warning("KAI instruction init failed for chat %s: %s", chat_id[:8], e)
+        # Don't block the real message — proceed without the instruction
 
 
 async def _proxy_sse(payload: dict) -> StreamingResponse:
@@ -175,6 +226,9 @@ async def chat(payload: _ChatPayload):
     if not _token() or not _storage_base():
         return JSONResponse(status_code=503, content={"error": "KAI not configured — set KAI_TOKEN secret"})
     try:
+        kai_url = await _discover_kai_url()
+        if payload.id not in _initialized_chats:
+            await _init_chat(kai_url, payload.id, _token(), _storage_base())
         return await _proxy_sse(payload.model_dump())
     except Exception as e:
         logger.error("KAI chat error: %s", e)
