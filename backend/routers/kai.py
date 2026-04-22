@@ -75,27 +75,52 @@ async def _proxy_sse(payload: dict) -> StreamingResponse:
     storage_base = _storage_base()
 
     async def stream():
-        async with httpx.AsyncClient(timeout=120) as client:
-            async with client.stream(
-                "POST",
-                f"{kai_url}/api/chat",
-                headers={
-                    "Content-Type": "application/json",
-                    "x-storageapi-token": token,
-                    "x-storageapi-url": storage_base,
-                },
-                json=payload,
-            ) as r:
-                content_type = r.headers.get("content-type", "")
-                logger.info("KAI upstream status=%d ct=%s url=%s", r.status_code, content_type, kai_url)
-                if r.status_code >= 400 or "event-stream" not in content_type:
-                    body = await r.aread()
-                    msg = body.decode(errors="replace")[:200]
-                    logger.warning("KAI non-SSE response: status=%d body=%r", r.status_code, msg)
-                    yield f'data: {{"type":"error","message":"KAI ({r.status_code}): {msg}"}}\n\n'.encode()
-                    return
-                async for chunk in r.aiter_bytes():
-                    yield chunk
+        import asyncio
+        queue: asyncio.Queue[bytes | None] = asyncio.Queue()
+        errors: list[str] = []
+
+        async def fetch_kai() -> None:
+            try:
+                async with httpx.AsyncClient(timeout=300) as client:
+                    async with client.stream(
+                        "POST", f"{kai_url}/api/chat",
+                        headers={
+                            "Content-Type": "application/json",
+                            "x-storageapi-token": token,
+                            "x-storageapi-url": storage_base,
+                        },
+                        json=payload,
+                    ) as r:
+                        ct = r.headers.get("content-type", "")
+                        logger.info("KAI upstream status=%d ct=%s", r.status_code, ct)
+                        if r.status_code >= 400 or "event-stream" not in ct:
+                            body = await r.aread()
+                            msg = body.decode(errors="replace")[:200]
+                            logger.warning("KAI non-SSE: status=%d body=%r", r.status_code, msg)
+                            errors.append(f"KAI ({r.status_code}): {msg}")
+                        else:
+                            async for chunk in r.aiter_bytes():
+                                await queue.put(chunk)
+            except Exception as exc:
+                errors.append(str(exc))
+            finally:
+                await queue.put(None)
+
+        asyncio.create_task(fetch_kai())
+
+        # Forward KAI chunks; send keepalive comments while waiting so proxies don't time out
+        while True:
+            try:
+                chunk = await asyncio.wait_for(queue.get(), timeout=5.0)
+                if chunk is None:
+                    break
+                yield chunk
+            except asyncio.TimeoutError:
+                yield b": keepalive\n\n"
+
+        if errors:
+            safe = errors[0].replace('"', "'")
+            yield f'data: {{"type":"error","message":"{safe}"}}\n\n'.encode()
 
     return StreamingResponse(stream(), media_type="text/event-stream")
 
