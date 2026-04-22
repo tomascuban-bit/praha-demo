@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCurrentUser, usePlatformInfo } from '@/lib/api'
-import { ExternalLink, Sun, Moon, Bot, HelpCircle, MessageSquare } from 'lucide-react'
+import { ExternalLink, Sun, Moon, Bot, HelpCircle, PenLine } from 'lucide-react'
 import { useTheme } from '@/lib/theme'
 import { useKai } from '@/lib/kai-context'
 import { useTour } from '@/lib/tour-context'
@@ -74,7 +74,7 @@ export default function Header() {
             title="Zpětná vazba"
             aria-label="Zpětná vazba"
           >
-            <MessageSquare size={15} />
+            <PenLine size={15} />
           </Link>
 
           <button

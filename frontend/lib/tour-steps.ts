@@ -1,4 +1,4 @@
-import { LayoutDashboard, Bike, ParkingCircle, Map, BarChart2, Bot, MessageSquare, Sparkles } from 'lucide-react'
+import { LayoutDashboard, Bike, ParkingCircle, Map, BarChart2, Bot, PenLine, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export const TOUR_KEY = 'tour_seen_v1'
@@ -56,7 +56,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     title: 'Zpětná vazba',
     description: 'Máte nápad na vylepšení nebo připomínku k datům? Klikněte na ikonu zprávy v záhlaví aplikace a napište nám. Rádi se dozvíme, co by mohlo být lepší.',
-    icon: MessageSquare,
+    icon: PenLine,
     targetId: 'feedback-button',
   },
 ]
