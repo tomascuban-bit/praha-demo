@@ -68,39 +68,6 @@ async def _discover_kai_url() -> str:
     return _kai_url
 
 
-async def _init_chat(kai_url: str, chat_id: str, token: str, storage_base: str) -> None:
-    """Send a hidden system instruction as the first message of a new chat, drain silently."""
-    instruction = os.getenv("KAI_SYSTEM_INSTRUCTION", _DEFAULT_INSTRUCTION)
-    payload = {
-        "id": chat_id,
-        "message": {
-            "id": str(uuid.uuid4()),
-            "role": "user",
-            "parts": [{"type": "text", "text": instruction}],
-            "metadata": {"hidden": True},
-        },
-        "selectedChatModel": "chat-model",
-        "selectedVisibilityType": "private",
-    }
-    try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            async with client.stream(
-                "POST", f"{kai_url}/api/chat",
-                headers={
-                    "Content-Type": "application/json",
-                    "x-storageapi-token": token,
-                    "x-storageapi-url": storage_base,
-                },
-                json=payload,
-            ) as r:
-                async for _ in r.aiter_bytes():
-                    pass  # drain — user never sees this exchange
-        _initialized_chats.add(chat_id)
-        logger.info("KAI chat %s initialized with system instruction", chat_id[:8])
-    except Exception as e:
-        logger.warning("KAI instruction init failed for chat %s: %s", chat_id[:8], e)
-        # Don't block the real message — proceed without the instruction
-
 
 async def _proxy_sse(payload: dict) -> StreamingResponse:
     kai_url = await _discover_kai_url()
@@ -226,10 +193,19 @@ async def chat(payload: _ChatPayload):
     if not _token() or not _storage_base():
         return JSONResponse(status_code=503, content={"error": "KAI not configured — set KAI_TOKEN secret"})
     try:
-        kai_url = await _discover_kai_url()
+        payload_dict = payload.model_dump()
+
+        # First message of a new chat: prepend the system instruction to the user's text.
+        # The frontend stores and displays the original text locally; KAI gets the full context.
         if payload.id not in _initialized_chats:
-            await _init_chat(kai_url, payload.id, _token(), _storage_base())
-        return await _proxy_sse(payload.model_dump())
+            instruction = os.getenv("KAI_SYSTEM_INSTRUCTION", _DEFAULT_INSTRUCTION)
+            parts = payload_dict.get("message", {}).get("parts", [])
+            if parts and parts[0].get("type") == "text":
+                parts[0]["text"] = f"{instruction}\n\n---\n\nUser question: {parts[0]['text']}"
+            _initialized_chats.add(payload.id)
+            logger.info("KAI chat %s: system instruction prepended", payload.id[:8])
+
+        return await _proxy_sse(payload_dict)
     except Exception as e:
         logger.error("KAI chat error: %s", e)
         return JSONResponse(status_code=502, content={"error": str(e)})
